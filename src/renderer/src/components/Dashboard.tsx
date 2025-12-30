@@ -20,7 +20,7 @@ const Dashboard: React.FC = () => {
         const loadData = async () => {
             const history = await window.electron.ipcRenderer.invoke('get-settings', 'breakHistory') || []
             const salary = await window.electron.ipcRenderer.invoke('get-settings', 'salary') || 10000
-            const c = await window.electron.ipcRenderer.invoke('get-settings', 'currencySymbol')
+            const c = await window.electron.ipcRenderer.invoke('get-settings', 'currency')
             if (c) setCurrency(c)
 
             const tracking = await window.electron.ipcRenderer.invoke('get-tracking-status')
@@ -61,6 +61,18 @@ const Dashboard: React.FC = () => {
             return () => clearInterval(interval)
         }
     }, [isLoafing, loafStart])
+
+    // Listen for triggers from Main (e.g. from Prompt window)
+    useEffect(() => {
+        const handler = (_event: any, type: string) => {
+            startLoafing(type)
+        }
+        window.electron.ipcRenderer.on('trigger-loafing', handler)
+        return () => {
+            window.electron.ipcRenderer.removeAllListeners('trigger-loafing')
+        }
+    }, [])
+
 
     const WORK_INTERVAL_MINS = 60
     // Calculate elapsed minutes based on actual start time from main process

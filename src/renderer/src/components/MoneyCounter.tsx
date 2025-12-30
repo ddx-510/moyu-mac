@@ -14,7 +14,7 @@ const MoneyCounter: React.FC = () => {
     useEffect(() => {
         const loadSettings = async () => {
             const s = await window.electron.ipcRenderer.invoke('get-settings', 'salary')
-            const c = await window.electron.ipcRenderer.invoke('get-settings', 'currencySymbol')
+            const c = await window.electron.ipcRenderer.invoke('get-settings', 'currency')
             const d = await window.electron.ipcRenderer.invoke('get-settings', 'workDays')
             const h = await window.electron.ipcRenderer.invoke('get-settings', 'workHours')
 

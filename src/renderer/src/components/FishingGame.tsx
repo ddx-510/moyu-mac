@@ -20,6 +20,7 @@ const FishingGame: React.FC = () => {
 
     const [targetZone, setTargetZone] = useState({ start: 40, width: 20 })
     const [result, setResult] = useState<{ success: boolean, fish?: Fish | null, money: number } | null>(null)
+    const [currency, setCurrency] = useState('¥')
 
     // Animation ref
     const requestRef = useRef<number | null>(null)
@@ -29,6 +30,9 @@ const FishingGame: React.FC = () => {
         const init = async () => {
             const data = await window.electron.ipcRenderer.invoke('get-fishing-data')
             setSessionData(data)
+
+            const c = await window.electron.ipcRenderer.invoke('get-settings', 'currency')
+            if (c) setCurrency(c)
 
             // Calculate difficulty/target based on duration?
             // For now random target
@@ -124,7 +128,7 @@ const FishingGame: React.FC = () => {
                     ⏱️ <span className="font-mono">{sessionData.duration < 60 ? `${Math.floor(sessionData.duration)}s` : `${(sessionData.duration / 60).toFixed(2)}m`}</span>
                 </div>
                 <div className="bg-[#0f172a]/40 backdrop-blur-md px-4 py-1.5 rounded-full border border-cyan-500/10 flex items-center gap-2">
-                    💰 已白嫖: <span className="text-emerald-400 font-mono font-bold">¥{sessionData.earned.toFixed(2)}</span>
+                    💰 已白嫖: <span className="text-emerald-400 font-mono font-bold">{currency}{sessionData.earned.toFixed(2)}</span>
                 </div>
             </div>
 
@@ -195,7 +199,7 @@ const FishingGame: React.FC = () => {
                         <div className="w-full h-px bg-white/5" />
                         <div className="flex justify-between items-center">
                             <span className="text-slate-400">老板上供</span>
-                            <span className="text-emerald-400 font-bold font-mono text-base">+¥{result.money.toFixed(2)}</span>
+                            <span className="text-emerald-400 font-bold font-mono text-base">+{currency}{result.money.toFixed(2)}</span>
                         </div>
                     </div>
 

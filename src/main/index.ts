@@ -228,7 +228,7 @@ function createPromptWindow() {
 
     promptWindow = new BrowserWindow({
         width: 400,
-        height: 300,
+        height: 450,
         show: false,
         frame: false,
         alwaysOnTop: true,
@@ -479,11 +479,12 @@ function createFakeUpdateWindow() {
             } else {
                 setTimeout(() => {
                     app.focus({ steal: true })
+                    const currencySymbol = store?.get('currency') || '¥'
                     dialog.showMessageBox({
                         type: 'info',
                         title: '摸鱼完成!',
                         message: `假更新结束`,
-                        detail: `⏱️ 时长: ${(closedDuration / 60).toFixed(2)} 分钟\n💰 已白嫖: ¥${earned.toFixed(2)}\n🎣 没钓到鱼...`,
+                        detail: `⏱️ 时长: ${(closedDuration / 60).toFixed(2)} 分钟\n💰 已白嫖: ${currencySymbol}${earned.toFixed(2)}\n🎣 没钓到鱼...`,
                         buttons: ['太棒了!'],
                         noLink: true
                     })
@@ -567,11 +568,12 @@ function createFakeCodingWindow() {
             } else {
                 setTimeout(() => {
                     app.focus({ steal: true })
+                    const currencySymbol = store?.get('currency') || '¥'
                     dialog.showMessageBox({
                         type: 'info',
                         title: '摸鱼完成!',
                         message: `假编程结束`,
-                        detail: `⏱️ 时长: ${(closedDuration / 60).toFixed(2)} 分钟\n💰 已白嫖: ¥${earned.toFixed(2)}\n🎣 没钓到鱼...`,
+                        detail: `⏱️ 时长: ${(closedDuration / 60).toFixed(2)} 分钟\n💰 已白嫖: ${currencySymbol}${earned.toFixed(2)}\n🎣 没钓到鱼...`,
                         buttons: ['太棒了!'],
                         noLink: true
                     })
@@ -662,11 +664,12 @@ ipcMain.on('end-poop-session', (_event, duration) => {
                 // Try to use dashboard window as parent if visible/exists, otherwise null
                 const parent = dashboardWindow && !dashboardWindow.isDestroyed() ? dashboardWindow : null
 
+                const currencySymbol = store?.get('currency') || '¥'
                 const options = {
                     type: 'info' as const,
                     title: '摸鱼完成!',
                     message: `带薪拉屎结束`,
-                    detail: `⏱️ 时长: ${(duration / 60).toFixed(2)} 分钟\n💰 已白嫖: ¥${earned.toFixed(2)}\n🎣 没钓到鱼...`,
+                    detail: `⏱️ 时长: ${(duration / 60).toFixed(2)} 分钟\n💰 已白嫖: ${currencySymbol}${earned.toFixed(2)}\n🎣 没钓到鱼...`,
                     buttons: ['爽!'],
                     noLink: true
                 }
@@ -780,10 +783,28 @@ ipcMain.on('start-loafing', (_event, type) => {
     } else if (type === 'fake-coding') {
         createFakeCodingWindow()
     } else {
-        // Poop or others: Open Main Window to specific tab
-        createMainWindow()
-        if (mainWindow) {
-            mainWindow.webContents.send('navigate-to', type)
+        // Poop: Open Dashboard to start timer
+        if (!dashboardWindow) {
+            createDashboardWindow()
+        }
+
+        // Ensure dashboard is visible
+        if (dashboardWindow) {
+            if (!dashboardWindow.isVisible()) {
+                // Check if we can position it near tray, otherwise center?
+                if (tray) {
+                    const { x, y, width, height } = tray.getBounds()
+                    const { width: windowWidth, height: windowHeight } = dashboardWindow.getBounds()
+                    const xPos = Math.round(x - windowWidth / 2 + width / 2)
+                    const yPos = Math.round(y >= height ? y - windowHeight : y + height)
+                    dashboardWindow.setPosition(xPos, yPos + 20)
+                } else {
+                    dashboardWindow.center()
+                }
+                dashboardWindow.show()
+            }
+            dashboardWindow.focus()
+            dashboardWindow.webContents.send('trigger-loafing', type)
         }
     }
 })
@@ -791,6 +812,10 @@ ipcMain.on('start-loafing', (_event, type) => {
 ipcMain.on('stop-loafing', () => {
     // Called when user actively stops a loafing session (e.g. stops Poop timer)
     startWorkTimer()
+})
+
+ipcMain.on('dismiss-prompt', () => {
+    promptWindow?.close()
 })
 
 let store: any
