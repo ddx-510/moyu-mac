@@ -1,5 +1,22 @@
 import React, { useState, useEffect } from 'react'
-import { Banknote, Timer, Eye, EyeOff, RefreshCw, Code, Fish, Settings, Power, Maximize2 } from 'lucide-react'
+import { Banknote, Timer, Eye, EyeOff, RefreshCw, Code, Fish, Settings, Power, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+
+// Helper to generate random swim stats
+const getSwimStats = (id: number) => {
+    // Deterministic pseudo-random based on ID to keep it stable across renders
+    const rand = (seed: number) => {
+        const x = Math.sin(id + seed) * 10000
+        return x - Math.floor(x)
+    }
+    return {
+        top: 10 + rand(1) * 80, // 10% to 90% height
+        duration: 10 + rand(2) * 20, // 10-30s duration
+        delay: rand(3) * -20, // Negative delay to start mid-swim
+        depth: rand(4), // Z-index sorting
+        scale: 0.8 + rand(5) * 0.5 // Scale variation
+    }
+}
 
 const Dashboard: React.FC = () => {
     const [totalLoafingSeconds, setTotalLoafingSeconds] = useState(0)
@@ -8,6 +25,8 @@ const Dashboard: React.FC = () => {
     const [loafType, setLoafType] = useState<string | null>(null)
     const [loafStart, setLoafStart] = useState<number | null>(null)
     const [loafElapsed, setLoafElapsed] = useState(0)
+    const [currentView, setCurrentView] = useState<'dashboard' | 'pond'>('dashboard')
+    const [collectedFish, setCollectedFish] = useState<any[]>([])
 
     // Work timer
     const [workStartTime, setWorkStartTime] = useState(Date.now())
@@ -21,6 +40,8 @@ const Dashboard: React.FC = () => {
             const history = await window.electron.ipcRenderer.invoke('get-settings', 'breakHistory') || []
             const salary = await window.electron.ipcRenderer.invoke('get-settings', 'salary') || 10000
             const c = await window.electron.ipcRenderer.invoke('get-settings', 'currency')
+            const fish = await window.electron.ipcRenderer.invoke('get-settings', 'fish') || []
+            setCollectedFish(fish)
             if (c) setCurrency(c)
 
             const tracking = await window.electron.ipcRenderer.invoke('get-tracking-status')
@@ -166,10 +187,10 @@ const Dashboard: React.FC = () => {
     }
 
     return (
-        <div className="p-3 w-72 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a] backdrop-blur-xl rounded-2xl border border-cyan-500/10 text-white shadow-2xl flex flex-col gap-2 overflow-hidden ring-1 ring-cyan-500/20">
+        <div className="p-3 w-72 h-[330px] bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a] backdrop-blur-xl rounded-2xl border border-white/10 text-white shadow-xl shadow-cyan-900/20 flex flex-col overflow-hidden relative">
 
             {/* Header: Controls */}
-            <div className="flex justify-between items-center px-1">
+            <div className="relative flex justify-between items-center px-1 mb-2 shrink-0 z-20 h-6">
                 {/* Tracking Toggle */}
                 <button
                     onClick={toggleTracking}
@@ -178,6 +199,34 @@ const Dashboard: React.FC = () => {
                 >
                     {isTracking ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                 </button>
+
+                {/* Navigation Group - Absolutely Centered */}
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <button
+                        onClick={() => setCurrentView('dashboard')}
+                        className={`p-0.5 text-slate-500 hover:text-cyan-400 transition-colors ${currentView === 'dashboard' ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+
+                    <div className="flex gap-1.5">
+                        <button
+                            onClick={() => setCurrentView('dashboard')}
+                            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${currentView === 'dashboard' ? 'bg-cyan-400 scale-125 shadow-[0_0_8px_rgba(34,211,238,0.6)]' : 'bg-slate-700 hover:bg-slate-600'}`}
+                        />
+                        <button
+                            onClick={() => setCurrentView('pond')}
+                            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${(currentView as string) === 'pond' ? 'bg-cyan-400 scale-125 shadow-[0_0_8px_rgba(34,211,238,0.6)]' : 'bg-slate-700 hover:bg-slate-600'}`}
+                        />
+                    </div>
+
+                    <button
+                        onClick={() => setCurrentView('pond')}
+                        className={`p-0.5 text-slate-500 hover:text-cyan-400 transition-colors ${(currentView as string) === 'pond' ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}
+                    >
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
+                </div>
 
                 {/* Right Actions: Settings & Quit */}
                 <div className="flex gap-1">
@@ -198,91 +247,183 @@ const Dashboard: React.FC = () => {
                 </div>
             </div>
 
-            {/* Circular Progress (Shifted Up) */}
-            <div className="flex flex-col items-center relative -mt-2">
-                <div className="relative w-20 h-20">
-                    <div className="absolute inset-0 bg-cyan-500/5 rounded-full blur-xl animate-pulse" />
-                    <svg className="w-full h-full transform -rotate-90 relative">
-                        <circle
-                            cx="40" cy="40" r="32"
-                            stroke="currentColor" strokeWidth="5" fill="transparent"
-                            className="text-slate-800"
-                        />
-                        <circle
-                            cx="40" cy="40" r="32"
-                            stroke="currentColor" strokeWidth="5" fill="transparent"
-                            strokeDasharray={2 * Math.PI * 32}
-                            strokeDashoffset={2 * Math.PI * 32 - (progress / 100) * 2 * Math.PI * 32}
-                            className="text-cyan-500 transition-all duration-1000 drop-shadow-[0_0_4px_rgba(6,182,212,0.5)]"
-                            strokeLinecap="round"
-                        />
-                        {/* Animated Tip */}
-                        <g style={{ transform: `rotate(${(progress / 100) * 360}deg)`, transformOrigin: '40px 40px', transition: 'transform 1s linear' }}>
-                            <circle cx="72" cy="40" r="3" fill="#fff" className="drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] animate-pulse" />
-                        </g>
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center scale-75">
-                        <div className="flex items-baseline gap-[1px] text-cyan-50 drop-shadow-md font-mono tracking-tighter">
-                            <span className="text-2xl font-bold">{minutesLeftDisplay}</span>
-                            <span className="text-xs text-cyan-400 opacity-80 mb-1">:</span>
-                            <span className="text-lg font-semibold text-cyan-200">{secondsLeftDisplay.toString().padStart(2, '0')}</span>
-                        </div>
-                        <div className="text-[9px] text-cyan-400/60 -mt-1 font-medium tracking-widest scale-90">REMAINING</div>
-                    </div>
-                </div>
-            </div>
 
-            {/* Stats Row */}
-            <div className="grid grid-cols-2 gap-2">
-                <div className="bg-[#1e293b]/50 p-1.5 rounded-xl text-center flex flex-col items-center justify-center border border-cyan-500/10 hover:border-cyan-500/30 transition-colors group">
-                    <div className="text-sm font-bold text-teal-400 font-mono tracking-tight group-hover:text-teal-300 transition-colors">{currency}{moneyEarned.toFixed(2)}</div>
-                    <div className="text-[9px] text-slate-400 flex items-center gap-1 justify-center mt-0.5 group-hover:text-teal-400/70 transition-colors">
-                        <Banknote className="w-3 h-3 text-teal-500/70" /> 已白嫖
-                    </div>
-                </div>
-                <div className="bg-[#1e293b]/50 p-1.5 rounded-xl text-center flex flex-col items-center justify-center border border-cyan-500/10 hover:border-cyan-500/30 transition-colors group">
-                    <div className="text-sm font-bold text-blue-400 font-mono tracking-tight group-hover:text-blue-300 transition-colors">{formatLoafTime(totalLoafingSeconds)}</div>
-                    <div className="text-[9px] text-slate-400 flex items-center gap-1 justify-center mt-0.5 group-hover:text-blue-400/70 transition-colors">
-                        <Timer className="w-3 h-3 text-blue-500/70" /> 摸鱼时长
-                    </div>
-                </div>
-            </div>
 
-            {/* Quick Actions */}
-            <div>
-                <div className="grid grid-cols-3 gap-2">
-                    <button
-                        onClick={() => startLoafing('poop')}
-                        className="p-2 bg-orange-500/5 hover:bg-orange-500/10 border border-orange-500/10 hover:border-orange-500/30 rounded-xl flex flex-col items-center gap-1 transition-all group"
-                    >
-                        <PoopIcon className="w-5 h-5 text-orange-400 group-hover:scale-110 transition-transform drop-shadow-lg" />
-                        <span className="text-[9px] text-orange-200/60 group-hover:text-orange-200/80">带薪拉屎</span>
-                    </button>
-                    <button
-                        onClick={() => startLoafing('fake-update')}
-                        className="p-2 bg-blue-500/5 hover:bg-blue-500/10 border border-blue-500/10 hover:border-blue-500/30 rounded-xl flex flex-col items-center gap-1 transition-all group"
-                    >
-                        <RefreshCw className="w-5 h-5 text-blue-400 group-hover:rotate-180 transition-transform duration-500 drop-shadow-lg" />
-                        <span className="text-[9px] text-blue-200/60 group-hover:text-blue-200/80">需要更新了</span>
-                    </button>
-                    <button
-                        onClick={() => startLoafing('fake-coding')}
-                        className="p-2 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 hover:border-emerald-500/30 rounded-xl flex flex-col items-center gap-1 transition-all group"
-                    >
-                        <Code className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform drop-shadow-lg" />
-                        <span className="text-[9px] text-emerald-200/60 group-hover:text-emerald-200/80">假装努力</span>
-                    </button>
-                </div>
-            </div>
+            {/* Main Content Area with Slide Animation */}
+            <div className="flex-1 relative overflow-hidden">
+                <AnimatePresence mode="popLayout" initial={false} custom={(currentView as string) === 'pond' ? 1 : -1}>
+                    {(currentView as string) === 'dashboard' ? (
+                        <motion.div
+                            key="dashboard"
+                            custom={(currentView as string) === 'pond' ? 1 : -1}
+                            initial={{ x: -300, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: -300, opacity: 0 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                            className="absolute inset-0 flex flex-col gap-2 px-1"
+                        >
+                            {/* Circular Progress (Shifted Up) */}
+                            <div className="flex flex-col items-center relative pt-2">
+                                <div className="relative w-20 h-20">
+                                    <div className="absolute inset-0 bg-cyan-500/5 rounded-full blur-xl animate-pulse" />
+                                    <svg className="w-full h-full transform -rotate-90 relative">
+                                        <circle
+                                            cx="40" cy="40" r="32"
+                                            stroke="currentColor" strokeWidth="5" fill="transparent"
+                                            className="text-slate-800"
+                                        />
+                                        <circle
+                                            cx="40" cy="40" r="32"
+                                            stroke="currentColor" strokeWidth="5" fill="transparent"
+                                            strokeDasharray={2 * Math.PI * 32}
+                                            strokeDashoffset={2 * Math.PI * 32 - (progress / 100) * 2 * Math.PI * 32}
+                                            className="text-cyan-500 transition-all duration-1000 drop-shadow-[0_0_4px_rgba(6,182,212,0.5)]"
+                                            strokeLinecap="round"
+                                        />
+                                        {/* Animated Tip */}
+                                        <g style={{ transform: `rotate(${(progress / 100) * 360}deg)`, transformOrigin: '40px 40px', transition: 'transform 1s linear' }}>
+                                            <circle cx="72" cy="40" r="3" fill="#fff" className="drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] animate-pulse" />
+                                        </g>
+                                    </svg>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center scale-75">
+                                        <div className="flex items-baseline gap-[1px] text-cyan-50 drop-shadow-md font-mono tracking-tighter">
+                                            <span className="text-2xl font-bold">{minutesLeftDisplay}</span>
+                                            <span className="text-xs text-cyan-400 opacity-80 mb-1">:</span>
+                                            <span className="text-lg font-semibold text-cyan-200">{secondsLeftDisplay.toString().padStart(2, '0')}</span>
+                                        </div>
+                                        <div className="text-[9px] text-cyan-400/60 -mt-1 font-medium tracking-widest scale-90">REMAINING</div>
+                                    </div>
+                                </div>
+                            </div>
 
-            {/* Open Full App */}
-            <button
-                onClick={() => window.electron.ipcRenderer.send('open-main-window')}
-                className="w-full py-2 bg-gradient-to-r from-blue-600/10 to-cyan-600/10 hover:from-blue-600/20 hover:to-cyan-600/20 border border-cyan-500/20 rounded-lg text-[10px] flex items-center justify-center gap-1.5 text-cyan-200/70 hover:text-cyan-100 transition-all group mt-1"
-            >
-                <span>打开完整应用</span>
-                <Maximize2 className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-            </button>
+                            {/* Stats Row */}
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="bg-[#1e293b]/50 p-1.5 rounded-xl text-center flex flex-col items-center justify-center border border-cyan-500/10 hover:border-cyan-500/30 transition-colors group">
+                                    <div className="text-sm font-bold text-teal-400 font-mono tracking-tight group-hover:text-teal-300 transition-colors">{currency}{moneyEarned.toFixed(2)}</div>
+                                    <div className="text-[9px] text-slate-400 flex items-center gap-1 justify-center mt-0.5 group-hover:text-teal-400/70 transition-colors">
+                                        <Banknote className="w-3 h-3 text-teal-500/70" /> 已白嫖
+                                    </div>
+                                </div>
+                                <div className="bg-[#1e293b]/50 p-1.5 rounded-xl text-center flex flex-col items-center justify-center border border-cyan-500/10 hover:border-cyan-500/30 transition-colors group">
+                                    <div className="text-sm font-bold text-blue-400 font-mono tracking-tight group-hover:text-blue-300 transition-colors">{formatLoafTime(totalLoafingSeconds)}</div>
+                                    <div className="text-[9px] text-slate-400 flex items-center gap-1 justify-center mt-0.5 group-hover:text-blue-400/70 transition-colors">
+                                        <Timer className="w-3 h-3 text-blue-500/70" /> 摸鱼时长
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Quick Actions */}
+                            <div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        onClick={() => startLoafing('poop')}
+                                        className="p-2 bg-orange-500/5 hover:bg-orange-500/10 border border-orange-500/10 hover:border-orange-500/30 rounded-xl flex flex-col items-center gap-1 transition-all group"
+                                    >
+                                        <PoopIcon className="w-5 h-5 text-orange-400 group-hover:scale-110 transition-transform drop-shadow-lg" />
+                                        <span className="text-[9px] text-orange-200/60 group-hover:text-orange-200/80">带薪拉屎</span>
+                                    </button>
+                                    <button
+                                        onClick={() => startLoafing('fake-update')}
+                                        className="p-2 bg-blue-500/5 hover:bg-blue-500/10 border border-blue-500/10 hover:border-blue-500/30 rounded-xl flex flex-col items-center gap-1 transition-all group"
+                                    >
+                                        <RefreshCw className="w-5 h-5 text-blue-400 group-hover:rotate-180 transition-transform duration-500 drop-shadow-lg" />
+                                        <span className="text-[9px] text-blue-200/60 group-hover:text-blue-200/80">需要更新了</span>
+                                    </button>
+                                    <button
+                                        onClick={() => startLoafing('fake-coding')}
+                                        className="p-2 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 hover:border-emerald-500/30 rounded-xl flex flex-col items-center gap-1 transition-all group"
+                                    >
+                                        <Code className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform drop-shadow-lg" />
+                                        <span className="text-[9px] text-emerald-200/60 group-hover:text-emerald-200/80">假装努力</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Open Full App */}
+                            <button
+                                onClick={() => window.electron.ipcRenderer.send('open-main-window')}
+                                className="w-full py-2 bg-gradient-to-r from-blue-600/10 to-cyan-600/10 hover:from-blue-600/20 hover:to-cyan-600/20 border border-cyan-500/20 rounded-lg text-[10px] flex items-center justify-center gap-1.5 text-cyan-200/70 hover:text-cyan-100 transition-all group mt-1"
+                            >
+                                <span>打开完整应用</span>
+                                <Maximize2 className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                            </button>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="pond"
+                            custom={(currentView as string) === 'pond' ? 1 : -1}
+                            initial={{ x: 300, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: 300, opacity: 0 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                            className="absolute inset-0 flex flex-col bg-gradient-to-b from-[#0f172a] to-[#164e63] overflow-hidden"
+                        >
+                            {/* Ocean Background Effects */}
+                            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] pointer-events-none" />
+                            <div className="absolute top-0 left-0 w-full h-[50px] bg-gradient-to-b from-cyan-500/10 to-transparent pointer-events-none z-10" />
+
+                            <div className="absolute top-2 left-3 z-20 flex items-center gap-2">
+                                <h3 className="text-lg font-bold text-cyan-100 flex items-center gap-2 drop-shadow-md">
+                                    <Fish className="w-5 h-5 text-cyan-400" />
+                                    <span>迷你鱼塘 ({collectedFish?.length || 0})</span>
+                                </h3>
+                            </div>
+
+                            {(!collectedFish || collectedFish.length === 0) ? (
+                                <div className="flex-1 flex flex-col items-center justify-center text-slate-200 gap-2 opacity-100 relative z-30 pointer-events-auto">
+                                    <div className="animate-bounce text-2xl">🐟</div>
+                                    <div className="text-xs font-medium">游来游去...</div>
+                                    <button
+                                        onClick={() => setCollectedFish([{ emoji: '🐠', type: '测试小鱼', rarity: 'Common' }, { emoji: '🐡', type: '测试河豚', rarity: 'Rare' }, { emoji: '🦈', type: '测试鲨鱼', rarity: 'Epic' }])}
+                                        className="text-[10px] bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 px-2 py-1 rounded-full border border-cyan-500/20 transition-colors mt-1"
+                                    >
+                                        召唤测试鱼群 🪄
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                    {/* Swimming Fish Animation */}
+                                    {collectedFish.map((fish, i) => {
+                                        const stats = getSwimStats(fish.id || i)
+                                        const isRight = i % 2 === 0
+
+                                        return (
+                                            <motion.div
+                                                key={`swim-${i}`}
+                                                className="absolute select-none cursor-pointer pointer-events-auto hover:z-50 group"
+                                                style={{
+                                                    top: `${stats.top}%`,
+                                                    filter: `blur(${stats.depth > 0.5 ? 0 : 0.5}px)`,
+                                                    opacity: 0.9 + stats.depth * 0.1,
+                                                    zIndex: 10 + Math.floor(stats.depth * 10)
+                                                }}
+                                                initial={{ x: isRight ? -50 : 350 }}
+                                                animate={{ x: isRight ? 350 : -50 }}
+                                                transition={{
+                                                    duration: stats.duration,
+                                                    repeat: Infinity,
+                                                    ease: "linear",
+                                                    delay: stats.delay
+                                                }}
+                                            >
+                                                <div
+                                                    className={`text-3xl transform ${isRight ? '-scale-x-100' : 'scale-x-100'} transition-transform duration-300 hover:scale-[1.3] drop-shadow-md`}
+                                                    title={`${fish.type} (${fish.rarity})`}
+                                                >
+                                                    {fish.emoji}
+                                                </div>
+                                            </motion.div>
+                                        )
+                                    })}
+                                </div>
+                            )}
+
+                            {/* Bottom Decor */}
+                            <div className="absolute bottom-0 left-0 w-full h-[60px] bg-[url('https://i.imgur.com/3q555.png')] opacity-20 pointer-events-none" />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
     )
 }
