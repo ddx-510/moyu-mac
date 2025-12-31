@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Waves, Clock, Calendar, BarChart3, History, MousePointerClick, Monitor, Fish, Armchair, Gamepad2, Utensils, Coffee, Cigarette, RefreshCw, Code } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
 type TimeRange = 'day' | 'week' | 'month' | 'year'
 
@@ -28,6 +28,8 @@ const ScreenTimeStats: React.FC = () => {
     const [breakHistory, setBreakHistory] = useState<BreakSession[]>([])
     const [totalSeconds, setTotalSeconds] = useState(0)
     const [selectedItem, setSelectedItem] = useState<DisplayItem | null>(null)
+    const [appIcons, setAppIcons] = useState<Record<string, string>>({})
+    const [groupByApp, setGroupByApp] = useState(false)
 
     useEffect(() => {
         const loadData = async () => {
@@ -35,9 +37,24 @@ const ScreenTimeStats: React.FC = () => {
             setBreakHistory(history.sort((a: BreakSession, b: BreakSession) => b.startTime - a.startTime))
             const total = await window.electron.ipcRenderer.invoke('get-settings', 'totalLoafingSeconds') || 0
             setTotalSeconds(total)
+
+            // Fetch icons for unique app types
+            const types = [...new Set(history.map((s: BreakSession) => s.type))] as string[]
+            fetchIconsForApps(types)
         }
         loadData()
     }, [])
+
+    const fetchIconsForApps = async (apps: string[]) => {
+        const iconsToFetch: Record<string, string> = {}
+        for (const app of apps) {
+            if (app) {
+                const icon = await window.electron.ipcRenderer.invoke('get-app-icon', app)
+                if (icon) iconsToFetch[app] = icon
+            }
+        }
+        setAppIcons(prev => ({ ...prev, ...iconsToFetch }))
+    }
 
     const { displayItems, rangeTotal, sessionCount } = useMemo(() => {
         const now = new Date()
@@ -129,6 +146,40 @@ const ScreenTimeStats: React.FC = () => {
         return { displayItems: items, rangeTotal: total, sessionCount: count }
     }, [breakHistory, timeRange])
 
+    // Grouped by app view for non-daily
+    const appGroupedItems = useMemo(() => {
+        if (timeRange === 'day') return []
+
+        const now = new Date()
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+        const startOfWeek = startOfDay - (now.getDay() === 0 ? 6 : now.getDay() - 1) * 86400000
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+        const startOfYear = new Date(now.getFullYear(), 0, 1).getTime()
+
+        let rangeStart = startOfWeek
+        if (timeRange === 'month') rangeStart = startOfMonth
+        if (timeRange === 'year') rangeStart = startOfYear
+
+        const filtered = breakHistory.filter(s => s.startTime >= rangeStart)
+
+        const appMap = new Map<string, { duration: number, count: number }>()
+        filtered.forEach(s => {
+            const existing = appMap.get(s.type) || { duration: 0, count: 0 }
+            appMap.set(s.type, { duration: existing.duration + s.duration, count: existing.count + 1 })
+        })
+
+        return Array.from(appMap.entries())
+            .map(([type, data]) => ({
+                id: `app-${type}`,
+                label: type,
+                duration: data.duration,
+                details: type,
+                count: data.count,
+                type: type
+            }))
+            .sort((a, b) => b.duration - a.duration)
+    }, [breakHistory, timeRange])
+
     const formatTime = (seconds: number) => {
         if (seconds < 60) return `${Math.floor(seconds)}s`
         const h = Math.floor(seconds / 3600)
@@ -153,7 +204,12 @@ const ScreenTimeStats: React.FC = () => {
         return name.replace(/^(👀|💩|🐟|🖥️|⌨️)\s*/, '').replace(/\s*(👀|💩|🐟|🖥️|⌨️)$/, '')
     }
 
-    const getIcon = (type: string = '') => {
+    const getIcon = (type: string = '', appIcons: Record<string, string> = {}) => {
+        // Check for app icon first
+        if (appIcons[type]) {
+            return <img src={appIcons[type]} alt="" className="w-5 h-5 rounded-sm" />
+        }
+
         const lowerType = type.toLowerCase()
         if (type === '带薪拉屎' || type === 'Poop' || lowerType.includes('拉屎') || lowerType.includes('poop')) return <Armchair className="w-5 h-5 text-orange-400" />
         if (type.includes('Fake Update') || type.includes('假更新')) return <RefreshCw className="w-5 h-5 text-blue-400" />
@@ -210,65 +266,155 @@ const ScreenTimeStats: React.FC = () => {
                 </div>
             </div>
 
+            {/* Group By Toggle (non-daily only) */}
+            {timeRange !== 'day' && (
+                <div className="flex items-center gap-1 mb-4 bg-slate-800/50 rounded-xl p-1 border border-cyan-500/10 w-fit">
+                    {[
+                        { key: false, label: '按日期' },
+                        { key: true, label: '按应用' }
+                    ].map((tab) => (
+                        <button
+                            key={String(tab.key)}
+                            onClick={() => setGroupByApp(tab.key)}
+                            className={`relative px-4 py-1.5 text-xs font-medium rounded-lg transition-colors duration-200 ${groupByApp === tab.key
+                                    ? 'text-cyan-300'
+                                    : 'text-slate-500 hover:text-slate-300'
+                                }`}
+                        >
+                            {groupByApp === tab.key && (
+                                <motion.div
+                                    layoutId="groupPill"
+                                    className="absolute inset-0 bg-cyan-500/20 border border-cyan-500/30 rounded-lg"
+                                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                />
+                            )}
+                            <span className="relative z-10">{tab.label}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
+
             {/* Content Area */}
             <div className="flex-1 overflow-y-auto custom-scrollbar">
-                {timeRange === 'day' ? (
-                    /* DAILY: List View */
-                    displayItems.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-gray-500">
-                            <Waves className="w-20 h-20 mb-4 text-cyan-500/20" />
-                            <p>今天还没摸鱼～</p>
-                        </div>
+                <AnimatePresence mode="wait">
+                    {timeRange === 'day' ? (
+                        /* DAILY: List View */
+                        displayItems.length === 0 ? (
+                            <motion.div
+                                key="day-empty"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.2 }}
+                                className="h-full flex flex-col items-center justify-center text-gray-500"
+                            >
+                                <Waves className="w-20 h-20 mb-4 text-cyan-500/20" />
+                                <p>今天还没摸鱼～</p>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="day-list"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.2 }}
+                                className="space-y-2"
+                            >
+                                {displayItems.map((item) => (
+                                    <div key={item.id} className="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-lg transition-all">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-cyan-500/20 rounded-lg">
+                                                {getIcon(item.type, appIcons)}
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-medium">{cleanName(item.type || '摸鱼')}</div>
+                                                <div className="text-xs text-gray-500">{item.label}</div>
+                                            </div>
+                                        </div>
+                                        <div className="text-green-400 font-mono text-sm">{formatTime(item.duration)}</div>
+                                    </div>
+                                ))}
+                            </motion.div>
+                        )
+                    ) : groupByApp ? (
+                        /* GROUPED BY APP: List View */
+                        appGroupedItems.length === 0 ? (
+                            <motion.div
+                                key="app-empty"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ duration: 0.25 }}
+                                className="h-full flex flex-col items-center justify-center text-gray-500"
+                            >
+                                <Waves className="w-20 h-20 mb-4 text-cyan-500/20" />
+                                <p>暂无数据</p>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="app-list"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ duration: 0.25 }}
+                                className="space-y-2"
+                            >
+                                {appGroupedItems.map((item) => (
+                                    <div key={item.id} className="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-lg transition-all">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-cyan-500/20 rounded-lg">
+                                                {getIcon(item.type, appIcons)}
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-medium">{cleanName(item.type || '摸鱼')}</div>
+                                                <div className="text-xs text-gray-500">{item.count} 次</div>
+                                            </div>
+                                        </div>
+                                        <div className="text-green-400 font-mono text-sm">{formatTime(item.duration)}</div>
+                                    </div>
+                                ))}
+                            </motion.div>
+                        )
                     ) : (
-                        <div className="space-y-2">
-                            {displayItems.map((item) => (
-                                <div key={item.id} className="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-lg transition-all">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-cyan-500/20 rounded-lg">
-                                            {getIcon(item.type)}
-                                        </div>
-                                        <div>
-                                            <div className="text-sm font-medium">{cleanName(item.type || '摸鱼')}</div>
-                                            <div className="text-xs text-gray-500">{item.label}</div>
-                                        </div>
-                                    </div>
-                                    <div className="text-green-400 font-mono text-sm">{formatTime(item.duration)}</div>
-                                </div>
-                            ))}
-                        </div>
-                    )
-                ) : (
-                    /* WEEK/MONTH/YEAR: Grid View - Ocean! */
-                    <div className="bg-gradient-to-b from-cyan-900/30 to-blue-900/40 rounded-2xl border border-cyan-500/20 p-4 min-h-[300px]">
-                        <div className={`grid gap-2 ${timeRange === 'week' ? 'grid-cols-7' :
-                            timeRange === 'year' ? 'grid-cols-4' :
-                                'grid-cols-7'
-                            }`}>
-                            {displayItems.map((item) => (
-                                <div
-                                    key={item.id}
-                                    onClick={() => item.duration > 0 && setSelectedItem(item)}
-                                    className={`aspect-square rounded-xl flex flex-col items-center justify-center transition-all border relative overflow-hidden
+                        /* WEEK/MONTH/YEAR: Grid View - Ocean! */
+                        <motion.div
+                            key="grid-view"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            transition={{ duration: 0.25 }}
+                            className="bg-gradient-to-b from-cyan-900/30 to-blue-900/40 rounded-2xl border border-cyan-500/20 p-4 min-h-[300px]"
+                        >
+                            <div className={`grid gap-2 ${timeRange === 'week' ? 'grid-cols-7' :
+                                timeRange === 'year' ? 'grid-cols-4' :
+                                    'grid-cols-7'
+                                }`}>
+                                {displayItems.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => item.duration > 0 && setSelectedItem(item)}
+                                        className={`aspect-square rounded-xl flex flex-col items-center justify-center transition-all border relative overflow-hidden
                                         ${item.duration > 0
-                                            ? 'bg-black/30 border-cyan-500/20 hover:bg-cyan-500/20 hover:border-cyan-400/40 cursor-pointer group'
-                                            : 'bg-black/10 border-white/5'
-                                        }`}
-                                >
-                                    {/* Bubbles effect for active items */}
-                                    {item.duration > 0 && <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-400/10 transition-colors pointer-events-none"></div>}
+                                                ? 'bg-black/30 border-cyan-500/20 hover:bg-cyan-500/20 hover:border-cyan-400/40 cursor-pointer group'
+                                                : 'bg-black/10 border-white/5'
+                                            }`}
+                                    >
+                                        {/* Bubbles effect for active items */}
+                                        {item.duration > 0 && <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-400/10 transition-colors pointer-events-none"></div>}
 
-                                    <div className="text-[10px] text-gray-500 mb-1">{item.label}</div>
-                                    <div className={getFishSize(item.duration)}>
-                                        🐟
+                                        <div className="text-[10px] text-gray-500 mb-1">{item.label}</div>
+                                        <div className={getFishSize(item.duration)}>
+                                            🐟
+                                        </div>
+                                        {item.duration > 0 && (
+                                            <div className="text-[9px] text-gray-400 mt-1">{formatTime(item.duration)}</div>
+                                        )}
                                     </div>
-                                    {item.duration > 0 && (
-                                        <div className="text-[9px] text-gray-400 mt-1">{formatTime(item.duration)}</div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* Detail Modal */}
@@ -293,7 +439,7 @@ const ScreenTimeStats: React.FC = () => {
                                     {selectedItem.breakdown.map((item, idx) => (
                                         <div key={idx} className="flex justify-between items-center text-xs px-2 py-1 bg-white/5 rounded">
                                             <div className="flex items-center gap-2 max-w-[140px]">
-                                                {getIcon(item.type)}
+                                                {getIcon(item.type, appIcons)}
                                                 <span className="truncate" title={cleanName(item.type)}>{cleanName(item.type)}</span>
                                             </div>
                                             <div className="flex gap-2 text-gray-400">
@@ -318,3 +464,4 @@ const ScreenTimeStats: React.FC = () => {
 }
 
 export default ScreenTimeStats
+

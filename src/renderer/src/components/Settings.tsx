@@ -24,6 +24,7 @@ const Settings: React.FC = () => {
     const [runningApps, setRunningApps] = useState<string[]>([])
     const [manualInput, setManualInput] = useState('')
     const [currentApp, setCurrentApp] = useState<string>('')
+    const [appIcons, setAppIcons] = useState<Record<string, string>>({})
 
     const [activeTab, setActiveTab] = useState<'general' | 'whitelist' | 'salary'>('general')
     const [isTracking, setIsTracking] = useState(true)
@@ -102,7 +103,33 @@ const Settings: React.FC = () => {
     const refreshRunningApps = async () => {
         const apps = await window.electron.ipcRenderer.invoke('get-running-apps')
         setRunningApps(apps)
+        // Fetch icons for all apps
+        fetchIconsForApps(apps)
     }
+
+    const fetchIconsForApps = async (apps: string[]) => {
+        const iconsToFetch: Record<string, string> = {}
+        for (const app of apps) {
+            try {
+                const icon = await window.electron.ipcRenderer.invoke('get-app-icon', app)
+                if (icon && typeof icon === 'string' && icon.startsWith('data:')) {
+                    iconsToFetch[app] = icon
+                }
+            } catch (e) {
+                console.error('[Settings] Error fetching icon for', app, e)
+            }
+        }
+        if (Object.keys(iconsToFetch).length > 0) {
+            setAppIcons(prev => ({ ...prev, ...iconsToFetch }))
+        }
+    }
+
+    // Fetch icons for whitelist apps on load
+    useEffect(() => {
+        if (workAppsArray.length > 0) {
+            fetchIconsForApps(workAppsArray)
+        }
+    }, [workAppsArray])
 
     const toggleApp = (app: string) => {
         if (workAppsArray.includes(app)) {
@@ -181,6 +208,24 @@ const Settings: React.FC = () => {
                                 Moyu helps you track your "break" value based on your actual salary.
                                 Data is stored locally. No boss will know.
                             </p>
+                        </div>
+
+                        {/* Danger Zone */}
+                        <div className="bg-red-500/10 backdrop-blur-md p-4 rounded-2xl border border-red-500/20">
+                            <h4 className="text-sm font-bold text-red-400 mb-3">⚠️ 危险区域</h4>
+                            <button
+                                onClick={async () => {
+                                    if (confirm('确定要清除所有记录吗？此操作不可恢复！\n\nAre you sure? This will delete all break history and fish collection!')) {
+                                        await window.electron.ipcRenderer.invoke('set-settings', 'breakHistory', [])
+                                        await window.electron.ipcRenderer.invoke('set-settings', 'fish', [])
+                                        await window.electron.ipcRenderer.invoke('set-settings', 'totalLoafingSeconds', 0)
+                                        alert('已清除所有记录！')
+                                    }
+                                }}
+                                className="w-full px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-xl text-red-300 text-sm transition-colors"
+                            >
+                                清除所有记录 (Clear All Data)
+                            </button>
                         </div>
                     </motion.div>
                 )}
@@ -285,11 +330,16 @@ const Settings: React.FC = () => {
                                     <button
                                         key={app}
                                         onClick={() => toggleApp(app)}
-                                        className={`px-3 py-1.5 rounded-lg text-xs transition-all border flex items-center gap-1 ${workAppsArray.includes(app)
+                                        className={`px-3 py-1.5 rounded-lg text-xs transition-all border flex items-center gap-1.5 ${workAppsArray.includes(app)
                                             ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-100 shadow-[0_0_8px_rgba(34,211,238,0.1)]'
                                             : 'bg-slate-800/50 border-transparent text-slate-400 hover:bg-slate-700 hover:text-slate-200'
                                             }`}
                                     >
+                                        {appIcons[app] ? (
+                                            <img src={appIcons[app]} alt="" className="w-4 h-4 rounded-sm" />
+                                        ) : (
+                                            <div className="w-4 h-4 rounded-sm bg-slate-600/50" />
+                                        )}
                                         {app}
                                         {workAppsArray.includes(app) && <Check className="w-3 h-3 text-cyan-400" />}
                                     </button>
@@ -313,7 +363,12 @@ const Settings: React.FC = () => {
                             <div className="flex flex-wrap gap-2 p-3 bg-[#1e293b]/30 rounded-xl min-h-[50px] border border-cyan-500/10">
                                 {workAppsArray.length === 0 && <span className="text-slate-600 text-xs self-center">暂无白名单应用 (所有应用都会被计为摸鱼)</span>}
                                 {workAppsArray.map(app => (
-                                    <div key={app} className="px-3 py-1 rounded-lg text-xs bg-teal-500/10 border border-teal-500/20 text-teal-200 flex items-center gap-2 group cursor-default shadow-sm">
+                                    <div key={app} className="px-3 py-1.5 rounded-lg text-xs bg-teal-500/10 border border-teal-500/20 text-teal-200 flex items-center gap-2 group cursor-default shadow-sm">
+                                        {appIcons[app] ? (
+                                            <img src={appIcons[app]} alt="" className="w-4 h-4 rounded-sm" />
+                                        ) : (
+                                            <div className="w-4 h-4 rounded-sm bg-teal-600/30" />
+                                        )}
                                         {app}
                                         <button onClick={() => toggleApp(app)} className="text-teal-500/50 hover:text-red-400 transition-colors">
                                             <X className="w-3 h-3" />

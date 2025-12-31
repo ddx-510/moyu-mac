@@ -1,5 +1,5 @@
 import { app, BrowserWindow, Tray, Menu, ipcMain, screen, nativeImage, shell, dialog, Notification } from 'electron'
-import { join } from 'path'
+import { join, basename } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import trayIconAsset from '../../resources/trayTemplate.png?asset'
@@ -906,9 +906,217 @@ ipcMain.handle('get-running-apps', () => {
     })
 })
 
+// Cache for app icons to avoid repeated lookups
+const appIconCache = new Map<string, string>()
+
+// Helper function to get the generic macOS app icon
+const getGenericAppIcon = (): string | null => {
+    const genericIconPath = '/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericApplicationIcon.icns'
+    if (!fs.existsSync(genericIconPath)) return null
+
+    try {
+        const { execSync } = require('child_process')
+        const tmpPng = `/tmp/generic-app-icon-${Date.now()}.png`
+        execSync(`sips -s format png -z 32 32 "${genericIconPath}" --out "${tmpPng}" 2>/dev/null`)
+
+        if (fs.existsSync(tmpPng)) {
+            const pngData = fs.readFileSync(tmpPng)
+            const base64 = pngData.toString('base64')
+            fs.unlinkSync(tmpPng)
+            return `data:image/png;base64,${base64}`
+        }
+    } catch (e) { }
+    return null
+}
+
+// Cache the generic icon
+let cachedGenericIcon: string | null = null
+const getOrCacheGenericIcon = (): string | null => {
+    if (cachedGenericIcon === null) {
+        cachedGenericIcon = getGenericAppIcon() || ''
+    }
+    return cachedGenericIcon || null
+}
+
+ipcMain.handle('get-app-icon', async (_event, appName: string): Promise<string | null> => {
+    if (!appName || process.platform !== 'darwin') return null
+
+    // Check cache first
+    if (appIconCache.has(appName)) {
+        return appIconCache.get(appName) || null
+    }
+
+    // For known non-app process names, use generic icon
+    if (appName === 'stable' || appName === 'node' || appName === 'Helper') {
+        const genericIcon = getOrCacheGenericIcon()
+        if (genericIcon) {
+            appIconCache.set(appName, genericIcon)
+            return genericIcon
+        }
+        appIconCache.set(appName, '')
+        return null
+    }
+
+    // Special handling for Electron dev app - use app's bundled icon
+    if (appName === 'Electron' || appName === 'Loafing' || appName === 'antigravity') {
+        try {
+            // Use the app's own icon from resources
+            const iconPath = join(__dirname, '../../resources/icon.png')
+            if (fs.existsSync(iconPath)) {
+                const pngData = fs.readFileSync(iconPath)
+                const base64 = pngData.toString('base64')
+                const dataUrl = `data:image/png;base64,${base64}`
+                appIconCache.set(appName, dataUrl)
+                return dataUrl
+            }
+        } catch (e) { }
+        // Fallback to generic icon
+        const genericIcon = getOrCacheGenericIcon()
+        if (genericIcon) {
+            appIconCache.set(appName, genericIcon)
+            return genericIcon
+        }
+        appIconCache.set(appName, '')
+        return null
+    }
+
+    try {
+        // Find app path
+        const directPaths = [
+            `/Applications/${appName}.app`,
+            `/System/Applications/${appName}.app`,
+            `/Applications/Utilities/${appName}.app`,
+            `/System/Applications/Utilities/${appName}.app`,
+            `/System/Library/CoreServices/${appName}.app`,
+        ]
+
+        let appPath: string | null = null
+        for (const p of directPaths) {
+            if (fs.existsSync(p)) {
+                appPath = p
+                break
+            }
+        }
+
+        // Partial match search
+        if (!appPath) {
+            const searchDirs = ['/Applications', '/System/Applications', '/System/Library/CoreServices']
+            for (const dir of searchDirs) {
+                try {
+                    const apps = fs.readdirSync(dir)
+                    const match = apps.find((a: string) =>
+                        a.toLowerCase().includes(appName.toLowerCase()) && a.endsWith('.app')
+                    )
+                    if (match) {
+                        appPath = join(dir, match)
+                        break
+                    }
+                } catch (e) { }
+            }
+        }
+
+        if (!appPath) {
+            appIconCache.set(appName, '')
+            return null
+        }
+
+        // Find .icns file
+        const resourcesPath = join(appPath, 'Contents', 'Resources')
+        let iconName = 'AppIcon.icns'
+
+        try {
+            const { execSync } = require('child_process')
+            const iconFileName = execSync(`defaults read "${appPath}/Contents/Info" CFBundleIconFile 2>/dev/null`, { encoding: 'utf8' }).trim()
+            if (iconFileName) {
+                iconName = iconFileName.endsWith('.icns') ? iconFileName : iconFileName + '.icns'
+            }
+        } catch (e) { }
+
+        const iconPaths = [
+            join(resourcesPath, iconName),
+            join(resourcesPath, 'AppIcon.icns'),
+            join(resourcesPath, 'app.icns'),
+            join(resourcesPath, 'icon.icns')
+        ]
+
+        let foundPath = ''
+        for (const p of iconPaths) {
+            if (fs.existsSync(p)) {
+                foundPath = p
+                break
+            }
+        }
+
+        if (!foundPath) {
+            // Use generic icon for apps without .icns
+            const genericIcon = '/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericApplicationIcon.icns'
+            if (fs.existsSync(genericIcon)) {
+                foundPath = genericIcon
+            } else {
+                appIconCache.set(appName, '')
+                return null
+            }
+        }
+
+        // Convert to PNG using sips (synchronous)
+        const tmpPng = `/tmp/app-icon-${Date.now()}-${Math.random().toString(36).slice(2)}.png`
+        const { execSync } = require('child_process')
+
+        try {
+            execSync(`sips -s format png -z 32 32 "${foundPath}" --out "${tmpPng}" 2>/dev/null`)
+
+            if (fs.existsSync(tmpPng)) {
+                const pngData = fs.readFileSync(tmpPng)
+                const base64 = pngData.toString('base64')
+                const dataUrl = `data:image/png;base64,${base64}`
+                appIconCache.set(appName, dataUrl)
+                fs.unlinkSync(tmpPng)
+                return dataUrl
+            }
+        } catch (e) { }
+
+        appIconCache.set(appName, '')
+        return null
+    } catch (e) {
+        console.error('[Icon] Error for', appName, e)
+        appIconCache.set(appName, '')
+        return null
+    }
+})
+
+// Helper function to extract icon using QuickLook
+const extractIconWithQlmanage = (appName: string, appPath: string, cache: Map<string, string>): Promise<string | null> => {
+    return new Promise((resolve) => {
+        console.log('[Icon] qlmanage for', appName)
+        const tmpDir = '/tmp'
+        const cmd = `qlmanage -t -s 32 -o "${tmpDir}" "${appPath}" 2>/dev/null`
+
+        exec(cmd, () => {
+            const fileBase = basename(appPath)
+            const pngPath = join(tmpDir, `${fileBase}.png`)
+
+            if (fs.existsSync(pngPath)) {
+                try {
+                    const pngData = fs.readFileSync(pngPath)
+                    const base64 = pngData.toString('base64')
+                    const dataUrl = `data:image/png;base64,${base64}`
+                    cache.set(appName, dataUrl)
+                    fs.unlinkSync(pngPath) // Clean up
+                    resolve(dataUrl)
+                    return
+                } catch (e) { }
+            }
+
+            cache.set(appName, '')
+            resolve(null)
+        })
+    })
+}
+
 ipcMain.handle('set-settings', (_event, key, value) => {
     if (store) store.set(key, value)
 })
+
 
 app.whenReady().then(async () => {
     const { default: Store } = await import('electron-store')
