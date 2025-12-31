@@ -9,6 +9,7 @@ let tray: Tray | null = null
 let dashboardWindow: BrowserWindow | null = null
 let fakeUpdateWindow: BrowserWindow | null = null
 let fakeCodingWindow: BrowserWindow | null = null
+let tideWarningWindow: BrowserWindow | null = null
 let fishingWindow: BrowserWindow | null = null
 let currentFishingSession: any = null
 let preventingBlur = false
@@ -622,6 +623,55 @@ function createFishingWindow(data: { duration: number, earned: number, hookedFis
     })
 }
 
+function createTideWarningWindow() {
+    if (tideWarningWindow) {
+        tideWarningWindow.show()
+        tideWarningWindow.focus()
+        return
+    }
+
+    const { x, y, width, height } = screen.getPrimaryDisplay().bounds
+
+    tideWarningWindow = new BrowserWindow({
+        x, y, width, height, // Explicit bounds
+        fullscreen: false, // Prevent new Space
+        transparent: true,
+        frame: false,
+        alwaysOnTop: true, // Keep it above windows
+        titleBarStyle: 'hidden',
+        resizable: false,
+        hasShadow: false,
+        enableLargerThanScreen: true, // Ensure it can cover edges 
+        webPreferences: {
+            preload: join(__dirname, '../preload/index.js'),
+            sandbox: false
+        }
+    })
+
+    // Ensure it stays on top of other full screen apps if possible
+    tideWarningWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+
+
+    // Macke it ignore mouse events mostly? 
+    // Actually the water should just be visual, but the "Click to close" needs to work.
+    // The component handles pointer-events.
+
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+        tideWarningWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}#/tide-warning`)
+    } else {
+        tideWarningWindow.loadFile(join(__dirname, '../renderer/index.html'), { hash: 'tide-warning' })
+    }
+
+    tideWarningWindow.on('ready-to-show', () => {
+        tideWarningWindow?.show()
+        tideWarningWindow?.focus()
+    })
+
+    tideWarningWindow.on('closed', () => {
+        tideWarningWindow = null
+    })
+}
+
 // IPC Handlers
 
 ipcMain.on('end-poop-session', (_event, duration) => {
@@ -728,6 +778,14 @@ ipcMain.on('close-fishing-window', () => {
     fishingWindow?.close()
 })
 
+ipcMain.on('open-tide-warning', () => {
+    createTideWarningWindow()
+})
+
+ipcMain.on('close-tide-warning', () => {
+    tideWarningWindow?.close()
+})
+
 ipcMain.on('open-main-window', () => {
     createMainWindow()
 })
@@ -776,6 +834,7 @@ ipcMain.on('open-settings', () => {
 ipcMain.on('start-loafing', (_event, type) => {
     // Renderer requested to start a specific loaf activity from Prompt
     if (promptWindow) promptWindow.close()
+    if (tideWarningWindow) tideWarningWindow.close()
 
     // Logic for different types
     if (type === 'fake-update') {

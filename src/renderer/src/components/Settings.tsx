@@ -125,12 +125,12 @@ const Settings: React.FC = () => {
                 <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-400 filter drop-shadow-sm">
                     设置 Settings
                 </h2>
-                <div className="grid grid-cols-3 gap-1 bg-slate-900/50 p-1 rounded-xl backdrop-blur-sm border border-cyan-500/10 relative w-80">
+                <div className="grid grid-cols-3 gap-1 bg-slate-900/50 p-1 rounded-xl backdrop-blur-sm border border-cyan-500/10 relative min-w-[320px]">
                     {['general', 'salary', 'whitelist'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
-                            className={`w-full py-1.5 rounded-lg text-sm transition-colors relative z-10 ${activeTab === tab ? 'text-cyan-400' : 'text-slate-400 hover:text-cyan-200'
+                            className={`px-4 py-1.5 rounded-lg text-sm transition-colors relative z-10 text-center ${activeTab === tab ? 'text-cyan-400' : 'text-slate-400 hover:text-cyan-200'
                                 }`}
                         >
                             {activeTab === tab && (
@@ -146,7 +146,7 @@ const Settings: React.FC = () => {
                 </div>
             </div>
 
-            <div className="flex-1 relative overflow-hidden">
+            <div className="flex-1 relative overflow-y-scroll" style={{ scrollbarGutter: 'stable' }}>
                 {activeTab === 'general' && (
                     <motion.div
                         key="general"

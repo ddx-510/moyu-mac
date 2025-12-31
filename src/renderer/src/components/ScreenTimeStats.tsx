@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Waves, Clock, Calendar, BarChart3, History, MousePointerClick, Monitor, Fish, Armchair, Gamepad2, Utensils, Coffee, Cigarette, RefreshCw, Code } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 type TimeRange = 'day' | 'week' | 'month' | 'year'
 
@@ -166,14 +167,24 @@ const ScreenTimeStats: React.FC = () => {
     }
 
     return (
-        <div className="text-white h-full flex flex-col overflow-hidden">
+        <div className="text-white h-full flex flex-col overflow-y-auto">
             {/* ... Header ... */}
             <div className="flex justify-between items-center mb-4 shrink-0">
                 <h2 className="text-2xl font-bold">🐟 摸鱼统计</h2>
-                <div className="flex bg-gray-800 rounded-lg p-1">
+                <div className="grid grid-cols-4 gap-1 bg-slate-900/50 p-1 rounded-xl backdrop-blur-sm border border-cyan-500/10 relative min-w-[280px]">
                     {(['day', 'week', 'month', 'year'] as TimeRange[]).map(t => (
-                        <button key={t} onClick={() => setTimeRange(t)}
-                            className={`px-3 py-1 rounded-md text-sm transition-all ${timeRange === t ? 'bg-cyan-600 text-white' : 'text-gray-400 hover:text-white'}`}>
+                        <button
+                            key={t}
+                            onClick={() => setTimeRange(t)}
+                            className={`px-3 py-1.5 rounded-lg text-sm transition-colors relative z-10 text-center ${timeRange === t ? 'text-cyan-400' : 'text-slate-400 hover:text-cyan-200'}`}
+                        >
+                            {timeRange === t && (
+                                <motion.div
+                                    layoutId="activeTimeRange"
+                                    className="absolute inset-0 bg-cyan-500/10 border border-cyan-500/20 shadow-[0_0_10px_rgba(34,211,238,0.1)] rounded-lg -z-10"
+                                    transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+                                />
+                            )}
                             {t === 'day' ? '今日' : t === 'week' ? '本周' : t === 'month' ? '本月' : '今年'}
                         </button>
                     ))}

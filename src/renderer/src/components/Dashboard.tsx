@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Banknote, Timer, Eye, EyeOff, RefreshCw, Code, Fish, Settings, Power, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Banknote, Timer, Eye, EyeOff, RefreshCw, Code, Fish, Settings, Power, Maximize2, ChevronLeft, ChevronRight, Waves } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+
 
 // Helper to generate random swim stats
 const getSwimStats = (id: number) => {
@@ -424,6 +425,8 @@ const Dashboard: React.FC = () => {
                     )}
                 </AnimatePresence>
             </div>
+
+
         </div>
     )
 }
