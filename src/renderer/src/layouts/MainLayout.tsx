@@ -2,10 +2,12 @@ import React, { useEffect } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Fish, Wallet, PieChart, SettingsIcon } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import logo from '../assets/logo.png'
 
 const MainLayout: React.FC = () => {
+    const { t } = useTranslation()
     const location = useLocation()
     const navigate = useNavigate()
 
@@ -29,10 +31,10 @@ const MainLayout: React.FC = () => {
     }, [navigate])
 
     const navItems = [
-        { path: '/main', label: '鱼塘', icon: Fish },
-        { path: '/main/money', label: '已白嫖', icon: Wallet },
-        { path: '/main/stats', label: '摸鱼统计', icon: PieChart },
-        { path: '/main/settings', label: '设置', icon: SettingsIcon }
+        { path: '/main', label: t('nav.fishPond'), icon: Fish },
+        { path: '/main/money', label: t('nav.earnings'), icon: Wallet },
+        { path: '/main/stats', label: t('nav.stats'), icon: PieChart },
+        { path: '/main/settings', label: t('nav.settings'), icon: SettingsIcon }
     ]
 
     return (
@@ -47,7 +49,7 @@ const MainLayout: React.FC = () => {
                         className="w-10 h-10 drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]"
                     />
                     <span className="text-2xl font-bold tracking-tight bg-gradient-to-r from-cyan-200 to-blue-400 bg-clip-text text-transparent">
-                        摸鱼
+                        {t('nav.appName')}
                     </span>
                 </div>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface Fish {
     id: number
@@ -14,6 +15,7 @@ interface Fish {
 
 
 const FishingGame: React.FC = () => {
+    const { t } = useTranslation()
     const [gameState, setGameState] = useState<'WAITING' | 'CASTING' | 'FIGHTING' | 'RESULT'>('WAITING')
     const [sessionData, setSessionData] = useState<any>(null)
     const [progress, setProgress] = useState(0) // Bar position 0-100
@@ -128,7 +130,7 @@ const FishingGame: React.FC = () => {
                     ⏱️ <span className="font-mono">{sessionData.duration < 60 ? `${Math.floor(sessionData.duration)}s` : `${(sessionData.duration / 60).toFixed(2)}m`}</span>
                 </div>
                 <div className="bg-[#0f172a]/40 backdrop-blur-md px-4 py-1.5 rounded-full border border-cyan-500/10 flex items-center gap-2">
-                    💰 已白嫖: <span className="text-emerald-400 font-mono font-bold">{currency}{sessionData.earned.toFixed(2)}</span>
+                    {t('fishing.earned')}: <span className="text-emerald-400 font-mono font-bold">{currency}{sessionData.earned.toFixed(2)}</span>
                 </div>
             </div>
 
@@ -137,7 +139,7 @@ const FishingGame: React.FC = () => {
                 <div className="w-full max-w-md z-10 relative">
                     <div className="text-center mb-12">
                         <div className="text-2xl font-bold text-cyan-50 animate-bounce drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
-                            🎣 点击下钩!
+                            {t('fishing.castLine')}
                         </div>
                         <div className="text-xs text-cyan-400/50 mt-2">Wait for the bar to align</div>
                     </div>
@@ -163,7 +165,7 @@ const FishingGame: React.FC = () => {
 
             {gameState === 'FIGHTING' && (
                 <div className="text-5xl animate-pulse text-cyan-300 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)] z-10 font-bold tracking-wider">
-                    🦈 拉扯中...
+                    {t('fishing.fighting')}
                 </div>
             )}
 
@@ -176,7 +178,7 @@ const FishingGame: React.FC = () => {
                     </div>
 
                     <h2 className="text-2xl font-bold mb-3 text-cyan-50">
-                        {result.success ? `钓到了 ${result.fish?.type}!` : '鱼跑了...'}
+                        {result.success ? t('fishing.caught', { fish: result.fish?.type }) : t('fishing.escaped')}
                     </h2>
 
                     {result.success && (
@@ -193,12 +195,12 @@ const FishingGame: React.FC = () => {
 
                     <div className="bg-[#0f172a]/60 rounded-2xl p-5 mb-8 text-left space-y-3 text-sm border border-cyan-500/10">
                         <div className="flex justify-between items-center">
-                            <span className="text-slate-400">本次摸鱼</span>
+                            <span className="text-slate-400">{t('fishing.thisSession')}</span>
                             <span className="text-cyan-100 font-mono">{(sessionData.duration / 60).toFixed(2)} min</span>
                         </div>
                         <div className="w-full h-px bg-white/5" />
                         <div className="flex justify-between items-center">
-                            <span className="text-slate-400">老板上供</span>
+                            <span className="text-slate-400">{t('fishing.bossContribution')}</span>
                             <span className="text-emerald-400 font-bold font-mono text-base">+{currency}{result.money.toFixed(2)}</span>
                         </div>
                     </div>
@@ -207,7 +209,7 @@ const FishingGame: React.FC = () => {
                         onClick={(e) => { e.stopPropagation(); closeGame() }}
                         className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-8 py-3.5 rounded-xl font-bold shadow-[0_0_20px_rgba(8,145,178,0.3)] hover:shadow-[0_0_30px_rgba(8,145,178,0.5)] transition-all duration-300 transform hover:-translate-y-0.5"
                     >
-                        收工
+                        {t('fishing.finish')}
                     </button>
                 </div>
             )}

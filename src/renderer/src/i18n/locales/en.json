@@ -1,0 +1,142 @@
+{
+  "common": {
+    "settings": "Settings",
+    "stats": "Stats",
+    "dashboard": "Dashboard",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "refresh": "Refresh",
+    "close": "Close",
+    "times": "times",
+    "total": "Total"
+  },
+  "nav": {
+    "fishPond": "Fish Pond",
+    "earnings": "Earnings",
+    "stats": "Break Stats",
+    "settings": "Settings",
+    "appName": "Moyu"
+  },
+  "tray": {
+    "openDashboard": "Open Dashboard",
+    "fakeUpdate": "Fake Update",
+    "quit": "Quit"
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "whitelist": "Whitelist",
+    "salary": "Salary",
+    "autoTracking": "Auto-track app usage",
+    "autoTrackingDesc": "Automatically track breaks based on your whitelisted work apps",
+    "language": "Language",
+    "about": "About Moyu",
+    "aboutDesc": "Moyu helps you track your \"break\" value based on your actual salary. Data is stored locally. No boss will know.",
+    "dangerZone": "⚠️ Danger Zone",
+    "clearAllData": "Clear All Data",
+    "clearConfirm": "Are you sure? This will delete all break history and fish collection!",
+    "cleared": "All data cleared!",
+    "runningApps": "Running Apps (click to add)",
+    "manualAdd": "Manual Add",
+    "inputAppName": "Enter app name...",
+    "currency": "Currency",
+    "monthlySalary": "Monthly Salary",
+    "workDays": "Work Days/Month",
+    "workHours": "Work Hours/Day",
+    "salaryTitle": "Salary & Hours",
+    "whitelistTitle": "App Whitelist",
+    "activeWhitelist": "Active Whitelist / Manual Input",
+    "noWhitelist": "No whitelist apps (All apps count as loafing)",
+    "emptyList": "List empty, please refresh"
+  },
+  "money": {
+    "notConfigured": "Salary Not Set",
+    "notConfiguredDesc": "Please configure your salary in Settings to calculate your break earnings.",
+    "goToSettings": "Go to Settings",
+    "earnings": "Break Earnings",
+    "hourlyRate": "Hourly Rate",
+    "breakTime": "Break Time",
+    "minutes": "min",
+    "editSalary": "Edit Salary"
+  },
+  "fishing": {
+    "earned": "💰 Earned",
+    "castLine": "🎣 Cast Line!",
+    "fighting": "🦈 Fighting...",
+    "caught": "Caught {{fish}}!",
+    "escaped": "It got away...",
+    "thisSession": "This Session",
+    "bossContribution": "Boss Contribution",
+    "finish": "Finish"
+  },
+  "stats": {
+    "title": "🐟 Break Stats",
+    "today": "Today",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "thisYear": "This Year",
+    "byDate": "By Date",
+    "byApp": "By App",
+    "noDataToday": "No breaks today~",
+    "noData": "No data",
+    "details": "Session Details",
+    "countBreakdown": "{{count}} sessions"
+  },
+  "prompt": {
+    "takeBreak": "Time for a break?",
+    "workedHour": "You've been working for 1 hour.",
+    "breakIsWork": "Taking breaks is part of the job.",
+    "paidPoop": "Paid Poop",
+    "fakeUpdate": "System Update",
+    "fakeCoding": "Fake Coding",
+    "keepWorking": "I'll keep working"
+  },
+  "tide": {
+    "takeBreak": "Time for a break!",
+    "workHard": "Great work! Pick a way to relax? 🌊",
+    "paidPoop": "Bathroom Break",
+    "needsUpdate": "System Update",
+    "fakeEffort": "Look Busy",
+    "notNow": "Not now, thanks"
+  },
+  "rarity": {
+    "common": "Common",
+    "rare": "Rare",
+    "epic": "Epic",
+    "legendary": "Legendary"
+  },
+  "breakTypes": {
+    "fake-update": "System Update",
+    "fake-coding": "Fake Coding",
+    "poop": "Bathroom Break"
+  },
+  "dashboard": {
+    "loafing": "Slacking off...",
+    "stopLoafing": "Stop Slacking",
+    "trackingOn": "Auto-detect ON",
+    "trackingOff": "Auto-detect OFF",
+    "trackingNotif": "Moyu Helper",
+    "trackingOnMsg": "Auto-detect enabled 👀",
+    "trackingOffMsg": "Auto-detect paused 🙈",
+    "earned": "Earned",
+    "loafTime": "Break Time",
+    "paidPoop": "Bathroom",
+    "fakeUpdate": "Update",
+    "fakeCoding": "Look Busy",
+    "openFull": "Open Full App",
+    "remaining": "REMAINING",
+    "pond": "Mini Pond",
+    "swimming": "Swimming around...",
+    "summonFish": "Summon Test Fish 🪄"
+  },
+  "fishPond": {
+    "title": "🎣 Fish Pond Aquarium",
+    "subtitle": "The longer you slack off, the more rare fish you catch...",
+    "noLife": "No Life Detected",
+    "total": "Total",
+    "totalTime": "Total Loafing Time",
+    "hours": "h",
+    "minutes": "m"
+  }
+}

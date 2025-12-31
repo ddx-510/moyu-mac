@@ -1,7 +1,10 @@
 import React from 'react'
 import { Monitor, Code, X, Coffee } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 const Prompt: React.FC = () => {
+    const { t } = useTranslation()
+
     const handleChoice = (type: string) => {
         window.electron.ipcRenderer.send('start-loafing', type)
     }
@@ -24,11 +27,11 @@ const Prompt: React.FC = () => {
                 </div>
 
                 <h1 className="text-2xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 to-blue-200">
-                    休息一下吧?
+                    {t('prompt.takeBreak')}
                 </h1>
                 <p className="text-slate-400 mb-8 text-center text-sm leading-relaxed max-w-xs">
-                    你已经连续工作 1 小时了。<br />
-                    带薪摸鱼也是工作的一部分。
+                    {t('prompt.workedHour')}<br />
+                    {t('prompt.breakIsWork')}
                 </p>
 
                 <div className="grid grid-cols-3 gap-3 w-full mb-8">
@@ -39,7 +42,7 @@ const Prompt: React.FC = () => {
                         <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
                             <PoopIcon className="w-6 h-6 text-orange-400" />
                         </div>
-                        <span className="text-xs font-bold text-orange-200/80 group-hover:text-orange-100">带薪拉屎</span>
+                        <span className="text-xs font-bold text-orange-200/80 group-hover:text-orange-100">{t('prompt.paidPoop')}</span>
                     </button>
 
                     <button
@@ -49,7 +52,7 @@ const Prompt: React.FC = () => {
                         <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
                             <Monitor className="w-6 h-6 text-blue-400" />
                         </div>
-                        <span className="text-xs font-bold text-blue-200/80 group-hover:text-blue-100">系统更新</span>
+                        <span className="text-xs font-bold text-blue-200/80 group-hover:text-blue-100">{t('prompt.fakeUpdate')}</span>
                     </button>
 
                     <button
@@ -59,7 +62,7 @@ const Prompt: React.FC = () => {
                         <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
                             <Code className="w-6 h-6 text-emerald-400" />
                         </div>
-                        <span className="text-xs font-bold text-emerald-200/80 group-hover:text-emerald-100">假装敲代</span>
+                        <span className="text-xs font-bold text-emerald-200/80 group-hover:text-emerald-100">{t('prompt.fakeCoding')}</span>
                     </button>
                 </div>
 
@@ -68,7 +71,7 @@ const Prompt: React.FC = () => {
                     className="flex items-center gap-2 px-6 py-2.5 rounded-full border border-slate-700 hover:border-slate-600 bg-slate-800/30 hover:bg-slate-800/50 text-slate-400 hover:text-slate-200 text-xs transition-all hover:shadow-lg backdrop-blur-sm"
                 >
                     <X className="w-3.5 h-3.5" />
-                    我还要接着干活
+                    {t('prompt.keepWorking')}
                 </button>
             </div>
         </div>
@@ -93,3 +96,4 @@ const PoopIcon = ({ className }: { className?: string }) => (
 )
 
 export default Prompt
+

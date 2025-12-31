@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Banknote, Eye, EyeOff, ScanEye, Building2, RotateCw, Check, X } from 'lucide-react'
+import { Banknote, Eye, EyeOff, ScanEye, Building2, RotateCw, Check, X, Globe } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 
 const DEFAULT_CURRENCIES = [
     { label: 'CNY (¥)', symbol: '¥' },
@@ -12,7 +13,13 @@ const DEFAULT_CURRENCIES = [
     { label: 'KRW (₩)', symbol: '₩' },
 ]
 
+const LANGUAGES = [
+    { code: 'en', label: 'English' },
+    { code: 'zh', label: '中文' },
+]
+
 const Settings: React.FC = () => {
+    const { t, i18n } = useTranslation()
     // string type for salary to allow empty input (no leading 0)
     const [salary, setSalary] = useState<string>('')
     const [currency, setCurrency] = useState<string>('¥')
@@ -150,7 +157,7 @@ const Settings: React.FC = () => {
         <div className="text-white max-w-2xl mx-auto flex flex-col gap-6 pb-8">
             <div className="flex items-center justify-between shrink-0">
                 <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-400 filter drop-shadow-sm">
-                    设置 Settings
+                    {t('settings.title')}
                 </h2>
                 <div className="grid grid-cols-3 gap-1 bg-slate-900/50 p-1 rounded-xl backdrop-blur-sm border border-cyan-500/10 relative min-w-[320px]">
                     {['general', 'salary', 'whitelist'].map((tab) => (
@@ -167,7 +174,7 @@ const Settings: React.FC = () => {
                                     transition={{ type: "spring", bounce: 0, duration: 0.3 }}
                                 />
                             )}
-                            {tab === 'general' ? '基础设置' : tab === 'salary' ? '薪资设置' : '白名单'}
+                            {tab === 'general' ? t('settings.general') : tab === 'salary' ? t('settings.salary') : t('settings.whitelist')}
                         </button>
                     ))}
                 </div>
@@ -182,6 +189,41 @@ const Settings: React.FC = () => {
                         transition={{ duration: 0.2 }}
                         className="space-y-6"
                     >
+                        {/* Language Selector */}
+                        <div className="bg-[#1e293b]/50 backdrop-blur-xl p-6 rounded-2xl border border-cyan-500/10 shadow-lg ring-1 ring-cyan-500/5">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-cyan-500/10 rounded-xl border border-cyan-500/20">
+                                        <Globe className="w-8 h-8 text-cyan-400" />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-lg mb-1 text-cyan-50">{t('settings.language')}</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1 bg-slate-800/50 rounded-xl p-1 border border-cyan-500/10">
+                                    {LANGUAGES.map((lang) => (
+                                        <button
+                                            key={lang.code}
+                                            onClick={() => i18n.changeLanguage(lang.code)}
+                                            className={`relative px-4 py-1.5 text-xs font-medium rounded-lg transition-colors duration-200 ${i18n.language.startsWith(lang.code)
+                                                ? 'text-cyan-300'
+                                                : 'text-slate-500 hover:text-slate-300'
+                                                }`}
+                                        >
+                                            {i18n.language.startsWith(lang.code) && (
+                                                <motion.div
+                                                    layoutId="langPill"
+                                                    className="absolute inset-0 bg-cyan-500/20 border border-cyan-500/30 rounded-lg"
+                                                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                                />
+                                            )}
+                                            <span className="relative z-10">{lang.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Auto Tracking Toggle */}
                         <div className="bg-[#1e293b]/50 backdrop-blur-xl p-6 rounded-2xl border border-cyan-500/10 flex items-center justify-between shadow-lg ring-1 ring-cyan-500/5">
                             <div className="flex items-center gap-4">
@@ -189,8 +231,8 @@ const Settings: React.FC = () => {
                                     <ScanEye className="w-8 h-8 text-cyan-400" />
                                 </div>
                                 <div>
-                                    <div className="font-bold text-lg mb-1 text-cyan-50">自动摸鱼检测</div>
-                                    <div className="text-xs text-slate-400">开启后将根据白名单自动记录摸鱼时长</div>
+                                    <div className="font-bold text-lg mb-1 text-cyan-50">{t('settings.autoTracking')}</div>
+                                    <div className="text-xs text-slate-400">{t('settings.autoTrackingDesc')}</div>
                                 </div>
                             </div>
                             <button
@@ -203,28 +245,27 @@ const Settings: React.FC = () => {
 
                         {/* Info Card */}
                         <div className="bg-[#1e293b]/30 backdrop-blur-md p-6 rounded-2xl border border-cyan-500/5">
-                            <h4 className="text-sm font-bold text-slate-400 mb-2">关于 Moyu</h4>
+                            <h4 className="text-sm font-bold text-slate-400 mb-2">{t('settings.about')}</h4>
                             <p className="text-xs text-slate-500 leading-relaxed">
-                                Moyu helps you track your "break" value based on your actual salary.
-                                Data is stored locally. No boss will know.
+                                {t('settings.aboutDesc')}
                             </p>
                         </div>
 
                         {/* Danger Zone */}
                         <div className="bg-red-500/10 backdrop-blur-md p-4 rounded-2xl border border-red-500/20">
-                            <h4 className="text-sm font-bold text-red-400 mb-3">⚠️ 危险区域</h4>
+                            <h4 className="text-sm font-bold text-red-400 mb-3">{t('settings.dangerZone')}</h4>
                             <button
                                 onClick={async () => {
-                                    if (confirm('确定要清除所有记录吗？此操作不可恢复！\n\nAre you sure? This will delete all break history and fish collection!')) {
+                                    if (confirm(t('settings.clearConfirm'))) {
                                         await window.electron.ipcRenderer.invoke('set-settings', 'breakHistory', [])
                                         await window.electron.ipcRenderer.invoke('set-settings', 'fish', [])
                                         await window.electron.ipcRenderer.invoke('set-settings', 'totalLoafingSeconds', 0)
-                                        alert('已清除所有记录！')
+                                        alert(t('settings.cleared'))
                                     }
                                 }}
                                 className="w-full px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-xl text-red-300 text-sm transition-colors"
                             >
-                                清除所有记录 (Clear All Data)
+                                {t('settings.clearAllData')}
                             </button>
                         </div>
                     </motion.div>
@@ -242,12 +283,12 @@ const Settings: React.FC = () => {
                             <div className="absolute top-0 right-0 p-32 bg-cyan-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/10 transition-all duration-1000"></div>
 
                             <h3 className="text-xl font-bold mb-6 flex items-center gap-3 relative z-10 text-cyan-50">
-                                <Banknote className="w-8 h-8 text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" /> 薪资与工时
+                                <Banknote className="w-8 h-8 text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" /> {t('settings.salaryTitle')}
                             </h3>
 
                             <div className="grid grid-cols-2 gap-6 relative z-10">
                                 <div className="col-span-2 md:col-span-1">
-                                    <label className="block text-xs text-cyan-200/70 uppercase tracking-widest mb-2 px-1">货币符号</label>
+                                    <label className="block text-xs text-cyan-200/70 uppercase tracking-widest mb-2 px-1">{t('settings.currency')}</label>
                                     <div className="relative">
                                         <select
                                             value={currency}
@@ -263,7 +304,7 @@ const Settings: React.FC = () => {
                                 </div>
 
                                 <div className="col-span-2 md:col-span-1">
-                                    <label className="block text-xs text-cyan-200/70 uppercase tracking-widest mb-2 px-1">月薪</label>
+                                    <label className="block text-xs text-cyan-200/70 uppercase tracking-widest mb-2 px-1">{t('settings.monthlySalary')}</label>
                                     <div className="relative">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-500/50 font-mono">{currency}</div>
                                         <input
@@ -283,7 +324,7 @@ const Settings: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs text-cyan-200/70 uppercase tracking-widest mb-2 px-1">月工作天数</label>
+                                    <label className="block text-xs text-cyan-200/70 uppercase tracking-widest mb-2 px-1">{t('settings.workDays')}</label>
                                     <input
                                         type="number"
                                         className="w-full bg-slate-900/50 border border-cyan-500/20 rounded-xl px-4 py-3 text-cyan-50 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors font-mono selection:bg-cyan-500/30"
@@ -292,7 +333,7 @@ const Settings: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs text-cyan-200/70 uppercase tracking-widest mb-2 px-1">日工作小时</label>
+                                    <label className="block text-xs text-cyan-200/70 uppercase tracking-widest mb-2 px-1">{t('settings.workHours')}</label>
                                     <input
                                         type="number"
                                         className="w-full bg-slate-900/50 border border-cyan-500/20 rounded-xl px-4 py-3 text-cyan-50 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors font-mono selection:bg-cyan-500/30"
@@ -314,18 +355,18 @@ const Settings: React.FC = () => {
                         className="space-y-6"
                     >
                         <h3 className="text-xl font-bold mb-6 flex items-center gap-3 text-cyan-50">
-                            <Building2 className="w-8 h-8 text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" /> 应用白名单
+                            <Building2 className="w-8 h-8 text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" /> {t('settings.whitelistTitle')}
                         </h3>
 
                         <div className="mb-6">
                             <div className="flex justify-between items-center mb-3">
-                                <label className="text-xs text-cyan-200/70 uppercase tracking-widest">运行中的应用 (点击添加)</label>
+                                <label className="text-xs text-cyan-200/70 uppercase tracking-widest">{t('settings.runningApps')}</label>
                                 <button onClick={refreshRunningApps} className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1 group">
-                                    <RotateCw className="w-3 h-3 group-hover:rotate-180 transition-transform duration-500" /> 刷新
+                                    <RotateCw className="w-3 h-3 group-hover:rotate-180 transition-transform duration-500" /> {t('common.refresh')}
                                 </button>
                             </div>
                             <div className="bg-[#1e293b]/50 rounded-xl p-2 border border-cyan-500/10 max-h-48 overflow-y-auto custom-scrollbar flex flex-wrap gap-2 shadow-inner">
-                                {runningApps.length === 0 && <div className="w-full text-center text-slate-600 py-4 text-xs">列表为空，请刷新</div>}
+                                {runningApps.length === 0 && <div className="w-full text-center text-slate-600 py-4 text-xs">{t('settings.emptyList')}</div>}
                                 {runningApps.map(app => (
                                     <button
                                         key={app}
@@ -348,20 +389,20 @@ const Settings: React.FC = () => {
                         </div>
 
                         <div>
-                            <label className="text-xs text-cyan-200/70 uppercase tracking-widest mb-3 block">已生效白名单 / 手动输入</label>
+                            <label className="text-xs text-cyan-200/70 uppercase tracking-widest mb-3 block">{t('settings.activeWhitelist')}</label>
                             <div className="flex gap-2 mb-3">
                                 <input
                                     type="text"
                                     value={manualInput}
                                     onChange={(e) => setManualInput(e.target.value)}
-                                    placeholder="输入应用名称..."
+                                    placeholder={t('settings.inputAppName')}
                                     className="flex-1 bg-slate-900/50 border border-cyan-500/20 rounded-xl px-4 py-2 text-cyan-50 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 text-sm placeholder-slate-600"
                                     onKeyDown={(e) => e.key === 'Enter' && addManualApp()}
                                 />
                                 <button onClick={addManualApp} className="px-4 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 rounded-xl text-sm transition-colors text-cyan-400 hover:text-cyan-300">+</button>
                             </div>
                             <div className="flex flex-wrap gap-2 p-3 bg-[#1e293b]/30 rounded-xl min-h-[50px] border border-cyan-500/10">
-                                {workAppsArray.length === 0 && <span className="text-slate-600 text-xs self-center">暂无白名单应用 (所有应用都会被计为摸鱼)</span>}
+                                {workAppsArray.length === 0 && <span className="text-slate-600 text-xs self-center">{t('settings.noWhitelist')}</span>}
                                 {workAppsArray.map(app => (
                                     <div key={app} className="px-3 py-1.5 rounded-lg text-xs bg-teal-500/10 border border-teal-500/20 text-teal-200 flex items-center gap-2 group cursor-default shadow-sm">
                                         {appIcons[app] ? (
@@ -385,7 +426,7 @@ const Settings: React.FC = () => {
                     </motion.div>
                 )}
             </div>
-        </div>
+        </div >
     )
 }
 export default Settings

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Banknote, Timer, Eye, EyeOff, RefreshCw, Code, Fish, Settings, Power, Maximize2, ChevronLeft, ChevronRight, Waves } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 
 
 // Helper to generate random swim stats
@@ -20,6 +21,7 @@ const getSwimStats = (id: number) => {
 }
 
 const Dashboard: React.FC = () => {
+    const { t } = useTranslation()
     const [totalLoafingSeconds, setTotalLoafingSeconds] = useState(0)
     const [moneyEarned, setMoneyEarned] = useState(0)
     const [isLoafing, setIsLoafing] = useState(false)
@@ -158,8 +160,8 @@ const Dashboard: React.FC = () => {
         await window.electron.ipcRenderer.invoke('toggle-tracking', newState)
         setIsTracking(newState)
 
-        new Notification('摸鱼助手', {
-            body: newState ? '已开启自动检测 👀' : '已暂停自动检测 🙈',
+        new Notification(t('dashboard.trackingNotif'), {
+            body: newState ? t('dashboard.trackingOnMsg') : t('dashboard.trackingOffMsg'),
             silent: true
         })
     }
@@ -172,7 +174,7 @@ const Dashboard: React.FC = () => {
                     <div className="text-5xl mb-4 animate-bounce flex justify-center">
                         {loafType === 'poop' ? <PoopIcon className="w-12 h-12 text-orange-400" /> : <Fish className="w-12 h-12 text-cyan-400" />}
                     </div>
-                    <div className="text-sm text-gray-400 mb-2">正在摸鱼中...</div>
+                    <div className="text-sm text-gray-400 mb-2">{t('dashboard.loafing')}</div>
                     <div className="text-4xl font-mono font-bold text-green-400 mb-6">
                         {formatLoafTime(loafElapsed)}
                     </div>
@@ -180,7 +182,7 @@ const Dashboard: React.FC = () => {
                         onClick={stopLoafing}
                         className="w-full py-3 bg-red-600 hover:bg-red-500 rounded-xl font-medium transition-all"
                     >
-                        结束摸鱼
+                        {t('dashboard.stopLoafing')}
                     </button>
                 </div>
             </div>
@@ -196,7 +198,7 @@ const Dashboard: React.FC = () => {
                 <button
                     onClick={toggleTracking}
                     className={`p-1.5 rounded-lg transition-all duration-300 ${isTracking ? 'bg-cyan-500/10 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.1)]' : 'bg-slate-800/50 text-slate-500'}`}
-                    title={isTracking ? "正在自动检测摸鱼" : "摸鱼检测已暂停"}
+                    title={isTracking ? t('dashboard.trackingOn') : t('dashboard.trackingOff')}
                 >
                     {isTracking ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                 </button>
@@ -234,14 +236,14 @@ const Dashboard: React.FC = () => {
                     <button
                         onClick={() => window.electron.ipcRenderer.send('open-settings')}
                         className="p-1.5 hover:bg-cyan-500/10 rounded-lg text-slate-400 hover:text-cyan-200 transition-colors"
-                        title="设置"
+                        title={t('nav.settings')}
                     >
                         <Settings className="w-3.5 h-3.5" />
                     </button>
                     <button
                         onClick={() => window.electron.ipcRenderer.send('quit-app')}
                         className="p-1.5 hover:bg-red-500/10 rounded-lg text-slate-400 hover:text-red-400 transition-colors"
-                        title="退出"
+                        title={t('tray.quit')}
                     >
                         <Power className="w-3.5 h-3.5" />
                     </button>
@@ -292,7 +294,7 @@ const Dashboard: React.FC = () => {
                                             <span className="text-xs text-cyan-400 opacity-80 mb-1">:</span>
                                             <span className="text-lg font-semibold text-cyan-200">{secondsLeftDisplay.toString().padStart(2, '0')}</span>
                                         </div>
-                                        <div className="text-[9px] text-cyan-400/60 -mt-1 font-medium tracking-widest scale-90">REMAINING</div>
+                                        <div className="text-[9px] text-cyan-400/60 -mt-1 font-medium tracking-widest scale-90">{t('dashboard.remaining')}</div>
                                     </div>
                                 </div>
                             </div>
@@ -302,13 +304,13 @@ const Dashboard: React.FC = () => {
                                 <div className="bg-[#1e293b]/50 p-1.5 rounded-xl text-center flex flex-col items-center justify-center border border-cyan-500/10 hover:border-cyan-500/30 transition-colors group">
                                     <div className="text-sm font-bold text-teal-400 font-mono tracking-tight group-hover:text-teal-300 transition-colors">{currency}{moneyEarned.toFixed(2)}</div>
                                     <div className="text-[9px] text-slate-400 flex items-center gap-1 justify-center mt-0.5 group-hover:text-teal-400/70 transition-colors">
-                                        <Banknote className="w-3 h-3 text-teal-500/70" /> 已白嫖
+                                        <Banknote className="w-3 h-3 text-teal-500/70" /> {t('dashboard.earned')}
                                     </div>
                                 </div>
                                 <div className="bg-[#1e293b]/50 p-1.5 rounded-xl text-center flex flex-col items-center justify-center border border-cyan-500/10 hover:border-cyan-500/30 transition-colors group">
                                     <div className="text-sm font-bold text-blue-400 font-mono tracking-tight group-hover:text-blue-300 transition-colors">{formatLoafTime(totalLoafingSeconds)}</div>
                                     <div className="text-[9px] text-slate-400 flex items-center gap-1 justify-center mt-0.5 group-hover:text-blue-400/70 transition-colors">
-                                        <Timer className="w-3 h-3 text-blue-500/70" /> 摸鱼时长
+                                        <Timer className="w-3 h-3 text-blue-500/70" /> {t('dashboard.loafTime')}
                                     </div>
                                 </div>
                             </div>
@@ -321,21 +323,21 @@ const Dashboard: React.FC = () => {
                                         className="p-2 bg-orange-500/5 hover:bg-orange-500/10 border border-orange-500/10 hover:border-orange-500/30 rounded-xl flex flex-col items-center gap-1 transition-all group"
                                     >
                                         <PoopIcon className="w-5 h-5 text-orange-400 group-hover:scale-110 transition-transform drop-shadow-lg" />
-                                        <span className="text-[9px] text-orange-200/60 group-hover:text-orange-200/80">带薪拉屎</span>
+                                        <span className="text-[9px] text-orange-200/60 group-hover:text-orange-200/80">{t('dashboard.paidPoop')}</span>
                                     </button>
                                     <button
                                         onClick={() => startLoafing('fake-update')}
                                         className="p-2 bg-blue-500/5 hover:bg-blue-500/10 border border-blue-500/10 hover:border-blue-500/30 rounded-xl flex flex-col items-center gap-1 transition-all group"
                                     >
                                         <RefreshCw className="w-5 h-5 text-blue-400 group-hover:rotate-180 transition-transform duration-500 drop-shadow-lg" />
-                                        <span className="text-[9px] text-blue-200/60 group-hover:text-blue-200/80">需要更新了</span>
+                                        <span className="text-[9px] text-blue-200/60 group-hover:text-blue-200/80">{t('dashboard.fakeUpdate')}</span>
                                     </button>
                                     <button
                                         onClick={() => startLoafing('fake-coding')}
                                         className="p-2 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 hover:border-emerald-500/30 rounded-xl flex flex-col items-center gap-1 transition-all group"
                                     >
                                         <Code className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform drop-shadow-lg" />
-                                        <span className="text-[9px] text-emerald-200/60 group-hover:text-emerald-200/80">假装努力</span>
+                                        <span className="text-[9px] text-emerald-200/60 group-hover:text-emerald-200/80">{t('dashboard.fakeCoding')}</span>
                                     </button>
                                 </div>
                             </div>
@@ -345,7 +347,7 @@ const Dashboard: React.FC = () => {
                                 onClick={() => window.electron.ipcRenderer.send('open-main-window')}
                                 className="w-full py-2 bg-gradient-to-r from-blue-600/10 to-cyan-600/10 hover:from-blue-600/20 hover:to-cyan-600/20 border border-cyan-500/20 rounded-lg text-[10px] flex items-center justify-center gap-1.5 text-cyan-200/70 hover:text-cyan-100 transition-all group mt-1"
                             >
-                                <span>打开完整应用</span>
+                                <span>{t('dashboard.openFull')}</span>
                                 <Maximize2 className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                             </button>
                         </motion.div>
@@ -366,19 +368,19 @@ const Dashboard: React.FC = () => {
                             <div className="absolute top-2 left-3 z-20 flex items-center gap-2">
                                 <h3 className="text-lg font-bold text-cyan-100 flex items-center gap-2 drop-shadow-md">
                                     <Fish className="w-5 h-5 text-cyan-400" />
-                                    <span>迷你鱼塘 ({collectedFish?.length || 0})</span>
+                                    <span>{t('dashboard.pond')} ({collectedFish?.length || 0})</span>
                                 </h3>
                             </div>
 
                             {(!collectedFish || collectedFish.length === 0) ? (
                                 <div className="flex-1 flex flex-col items-center justify-center text-slate-200 gap-2 opacity-100 relative z-30 pointer-events-auto">
                                     <div className="animate-bounce text-2xl">🐟</div>
-                                    <div className="text-xs font-medium">游来游去...</div>
+                                    <div className="text-xs font-medium">{t('dashboard.swimming')}</div>
                                     <button
                                         onClick={() => setCollectedFish([{ emoji: '🐠', type: '测试小鱼', rarity: 'Common' }, { emoji: '🐡', type: '测试河豚', rarity: 'Rare' }, { emoji: '🦈', type: '测试鲨鱼', rarity: 'Epic' }])}
                                         className="text-[10px] bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 px-2 py-1 rounded-full border border-cyan-500/20 transition-colors mt-1"
                                     >
-                                        召唤测试鱼群 🪄
+                                        {t('dashboard.summonFish')}
                                     </button>
                                 </div>
                             ) : (

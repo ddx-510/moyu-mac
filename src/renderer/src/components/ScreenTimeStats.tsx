@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Waves, Clock, Calendar, BarChart3, History, MousePointerClick, Monitor, Fish, Armchair, Gamepad2, Utensils, Coffee, Cigarette, RefreshCw, Code } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 
 type TimeRange = 'day' | 'week' | 'month' | 'year'
 
@@ -24,6 +25,7 @@ interface DisplayItem {
 }
 
 const ScreenTimeStats: React.FC = () => {
+    const { t } = useTranslation()
     const [timeRange, setTimeRange] = useState<TimeRange>('week')
     const [breakHistory, setBreakHistory] = useState<BreakSession[]>([])
     const [totalSeconds, setTotalSeconds] = useState(0)
@@ -69,8 +71,17 @@ const ScreenTimeStats: React.FC = () => {
         const getBreakdown = (sessions: BreakSession[]) => {
             const map = new Map<string, { duration: number, count: number }>()
             sessions.forEach(s => {
-                const existing = map.get(s.type) || { duration: 0, count: 0 }
-                map.set(s.type, { duration: existing.duration + s.duration, count: existing.count + 1 })
+                // Normalize type for grouping
+                const cleaned = s.type.replace(/^(👀|💩|🐟|🖥️|⌨️)\s*/, '').replace(/\s*(👀|💩|🐟|🖥️|⌨️)$/, '')
+                const lower = cleaned.toLowerCase().trim()
+
+                let typeKey = cleaned
+                if (['fake-update', 'fake update', 'system update', '假更新', '假装更新'].includes(lower)) typeKey = 'fake-update'
+                else if (['fake-coding', 'fake coding', 'look busy', '假编程', '假装工作', '伪装工作'].includes(lower)) typeKey = 'fake-coding'
+                else if (['poop', 'paid poop', 'bathroom break', '带薪拉屎', '带薪蹲坑'].includes(lower)) typeKey = 'poop'
+
+                const existing = map.get(typeKey) || { duration: 0, count: 0 }
+                map.set(typeKey, { duration: existing.duration + s.duration, count: existing.count + 1 })
             })
             return Array.from(map.entries()).map(([type, data]) => ({ type, ...data })).sort((a, b) => b.duration - a.duration)
         }
@@ -201,7 +212,16 @@ const ScreenTimeStats: React.FC = () => {
     const cleanName = (name: string) => {
         // Use alternation | instead of [] to handle surrogate pairs correctly without u flag issues
         // Includes: 👀, 💩, 🐟, 🖥️, ⌨️
-        return name.replace(/^(👀|💩|🐟|🖥️|⌨️)\s*/, '').replace(/\s*(👀|💩|🐟|🖥️|⌨️)$/, '')
+        let cleaned = name.replace(/^(👀|💩|🐟|🖥️|⌨️)\s*/, '').replace(/\s*(👀|💩|🐟|🖥️|⌨️)$/, '')
+
+        // Helper to check for variations
+        const lower = cleaned.toLowerCase()
+
+        if (lower === 'fake-update' || cleaned === '假更新' || cleaned === 'Fake Update') return t('breakTypes.fake-update')
+        if (lower === 'fake-coding' || cleaned === '假编程' || cleaned === 'Fake Coding' || cleaned === '伪装工作') return t('breakTypes.fake-coding')
+        if (lower === 'poop' || cleaned === '带薪拉屎' || cleaned === 'Paid Poop' || cleaned === 'Bathroom Break') return t('breakTypes.poop')
+
+        return cleaned
     }
 
     const getIcon = (type: string = '', appIcons: Record<string, string> = {}) => {
@@ -211,9 +231,9 @@ const ScreenTimeStats: React.FC = () => {
         }
 
         const lowerType = type.toLowerCase()
-        if (type === '带薪拉屎' || type === 'Poop' || lowerType.includes('拉屎') || lowerType.includes('poop')) return <Armchair className="w-5 h-5 text-orange-400" />
-        if (type.includes('Fake Update') || type.includes('假更新')) return <RefreshCw className="w-5 h-5 text-blue-400" />
-        if (type.includes('Fake Coding') || type.includes('假编程')) return <Code className="w-5 h-5 text-emerald-400" />
+        if (type === '带薪拉屎' || type === 'poop' || lowerType.includes('拉屎') || lowerType.includes('poop')) return <Armchair className="w-5 h-5 text-orange-400" />
+        if (type === 'fake-update' || type.includes('Fake Update') || type.includes('假更新') || type.includes('假装更新')) return <RefreshCw className="w-5 h-5 text-blue-400" />
+        if (type === 'fake-coding' || type.includes('Fake Coding') || type.includes('假编程') || type.includes('假装工作')) return <Code className="w-5 h-5 text-emerald-400" />
         if (lowerType.includes('游戏') || lowerType.includes('game') || lowerType.includes('steam')) return <Gamepad2 className="w-5 h-5 text-purple-400" />
         if (type === 'Fish' || lowerType.includes('fish') || lowerType.includes('摸鱼')) return <Fish className="w-5 h-5 text-cyan-400" />
         if (type === 'Smoke' || lowerType.includes('smoke')) return <Cigarette className="w-5 h-5 text-gray-400" />
@@ -226,22 +246,22 @@ const ScreenTimeStats: React.FC = () => {
         <div className="text-white h-full flex flex-col overflow-y-auto">
             {/* ... Header ... */}
             <div className="flex justify-between items-center mb-4 shrink-0">
-                <h2 className="text-2xl font-bold">🐟 摸鱼统计</h2>
+                <h2 className="text-2xl font-bold">{t('stats.title')}</h2>
                 <div className="grid grid-cols-4 gap-1 bg-slate-900/50 p-1 rounded-xl backdrop-blur-sm border border-cyan-500/10 relative min-w-[280px]">
-                    {(['day', 'week', 'month', 'year'] as TimeRange[]).map(t => (
+                    {(['day', 'week', 'month', 'year'] as TimeRange[]).map(range => (
                         <button
-                            key={t}
-                            onClick={() => setTimeRange(t)}
-                            className={`px-3 py-1.5 rounded-lg text-sm transition-colors relative z-10 text-center ${timeRange === t ? 'text-cyan-400' : 'text-slate-400 hover:text-cyan-200'}`}
+                            key={range}
+                            onClick={() => setTimeRange(range)}
+                            className={`px-3 py-1.5 rounded-lg text-sm transition-colors relative z-10 text-center ${timeRange === range ? 'text-cyan-400' : 'text-slate-400 hover:text-cyan-200'}`}
                         >
-                            {timeRange === t && (
+                            {timeRange === range && (
                                 <motion.div
                                     layoutId="activeTimeRange"
                                     className="absolute inset-0 bg-cyan-500/10 border border-cyan-500/20 shadow-[0_0_10px_rgba(34,211,238,0.1)] rounded-lg -z-10"
                                     transition={{ type: "spring", bounce: 0, duration: 0.3 }}
                                 />
                             )}
-                            {t === 'day' ? '今日' : t === 'week' ? '本周' : t === 'month' ? '本月' : '今年'}
+                            {range === 'day' ? t('stats.today') : range === 'week' ? t('stats.thisWeek') : range === 'month' ? t('stats.thisMonth') : t('stats.thisYear')}
                         </button>
                     ))}
                 </div>
@@ -252,16 +272,16 @@ const ScreenTimeStats: React.FC = () => {
                 <div>
                     <div className="text-gray-400 text-xs flex items-center gap-1 mb-1">
                         <Clock className="w-3 h-3" />
-                        {timeRange === 'day' ? '今日' : timeRange === 'week' ? '本周' : timeRange === 'month' ? '本月' : '今年'}摸鱼
+                        {timeRange === 'day' ? t('stats.today') : timeRange === 'week' ? t('stats.thisWeek') : timeRange === 'month' ? t('stats.thisMonth') : t('stats.thisYear')}
                     </div>
                     <div className="text-3xl font-bold font-mono text-cyan-400">{formatTime(rangeTotal)}</div>
                 </div>
                 <div className="text-right">
                     <div className="text-xs text-gray-500 flex items-center justify-end gap-1 mb-1">
-                        {sessionCount} 次 <MousePointerClick className="w-3 h-3" />
+                        {sessionCount} {t('common.times')} <MousePointerClick className="w-3 h-3" />
                     </div>
                     <div className="text-gray-300 font-mono text-sm flex items-center justify-end gap-1">
-                        总计 {formatTime(totalSeconds)} <BarChart3 className="w-3 h-3" />
+                        {t('common.total')} {formatTime(totalSeconds)} <BarChart3 className="w-3 h-3" />
                     </div>
                 </div>
             </div>
@@ -270,15 +290,15 @@ const ScreenTimeStats: React.FC = () => {
             {timeRange !== 'day' && (
                 <div className="flex items-center gap-1 mb-4 bg-slate-800/50 rounded-xl p-1 border border-cyan-500/10 w-fit">
                     {[
-                        { key: false, label: '按日期' },
-                        { key: true, label: '按应用' }
+                        { key: false, label: t('stats.byDate') },
+                        { key: true, label: t('stats.byApp') }
                     ].map((tab) => (
                         <button
                             key={String(tab.key)}
                             onClick={() => setGroupByApp(tab.key)}
                             className={`relative px-4 py-1.5 text-xs font-medium rounded-lg transition-colors duration-200 ${groupByApp === tab.key
-                                    ? 'text-cyan-300'
-                                    : 'text-slate-500 hover:text-slate-300'
+                                ? 'text-cyan-300'
+                                : 'text-slate-500 hover:text-slate-300'
                                 }`}
                         >
                             {groupByApp === tab.key && (
@@ -309,7 +329,7 @@ const ScreenTimeStats: React.FC = () => {
                                 className="h-full flex flex-col items-center justify-center text-gray-500"
                             >
                                 <Waves className="w-20 h-20 mb-4 text-cyan-500/20" />
-                                <p>今天还没摸鱼～</p>
+                                <p>{t('stats.noDataToday')}</p>
                             </motion.div>
                         ) : (
                             <motion.div
@@ -348,7 +368,7 @@ const ScreenTimeStats: React.FC = () => {
                                 className="h-full flex flex-col items-center justify-center text-gray-500"
                             >
                                 <Waves className="w-20 h-20 mb-4 text-cyan-500/20" />
-                                <p>暂无数据</p>
+                                <p>{t('stats.noData')}</p>
                             </motion.div>
                         ) : (
                             <motion.div
@@ -428,13 +448,13 @@ const ScreenTimeStats: React.FC = () => {
 
                         <div className="bg-white/5 rounded-lg p-4 mb-4 text-center">
                             <div className="text-3xl font-bold text-green-400 font-mono">{formatTime(selectedItem.duration)}</div>
-                            <div className="text-gray-500 text-sm mt-1">{selectedItem.count} 次摸鱼</div>
+                            <div className="text-gray-500 text-sm mt-1">{t('stats.countBreakdown', { count: selectedItem.count })}</div>
                         </div>
 
                         {/* Breakdown List */}
                         {selectedItem.breakdown && selectedItem.breakdown.length > 0 && (
                             <div className="mb-4 max-h-40 overflow-y-auto custom-scrollbar border-t border-white/5 pt-2">
-                                <div className="text-xs text-gray-500 mb-2 pl-1">摸鱼详情</div>
+                                <div className="text-xs text-gray-500 mb-2 pl-1">{t('stats.details')}</div>
                                 <div className="space-y-1.5">
                                     {selectedItem.breakdown.map((item, idx) => (
                                         <div key={idx} className="flex justify-between items-center text-xs px-2 py-1 bg-white/5 rounded">
@@ -443,7 +463,7 @@ const ScreenTimeStats: React.FC = () => {
                                                 <span className="truncate" title={cleanName(item.type)}>{cleanName(item.type)}</span>
                                             </div>
                                             <div className="flex gap-2 text-gray-400">
-                                                <span>{item.count}次</span>
+                                                <span>{item.count} {t('common.times')}</span>
                                                 <span className="font-mono text-cyan-400">{formatTime(item.duration)}</span>
                                             </div>
                                         </div>
@@ -454,7 +474,7 @@ const ScreenTimeStats: React.FC = () => {
 
                         <button onClick={() => setSelectedItem(null)}
                             className="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-2 rounded-lg transition-all">
-                            关闭
+                            {t('common.close')}
                         </button>
                     </div>
                 </div>

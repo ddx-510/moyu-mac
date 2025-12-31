@@ -1,4 +1,5 @@
 import React from 'react'
+import './i18n' // Initialize i18n
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import Dashboard from './components/Dashboard'
 import FakeUpdate from './components/FakeUpdate'

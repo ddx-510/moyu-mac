@@ -4,6 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import trayIconAsset from '../../resources/trayTemplate.png?asset'
 import { exec } from 'child_process'
+import { t, setLanguage, initLanguage } from './i18n'
 
 let tray: Tray | null = null
 let dashboardWindow: BrowserWindow | null = null
@@ -84,22 +85,18 @@ function createTray() {
     tray = new Tray(trayIcon)
     tray.setToolTip('Moyu')
 
+    // Click to toggle dashboard
     tray.on('click', () => {
         toggleDashboard()
     })
 
-    // Optional: Context menu
-    const contextMenu = Menu.buildFromTemplate([
-        { label: 'Open Dashboard', click: () => toggleDashboard() },
-        { label: 'Fake Update', click: () => createFakeUpdateWindow() },
-        { type: 'separator' },
-        { label: 'Quit', click: () => app.quit() }
-    ])
-
+    // Right click also toggles dashboard instead of showing menu
     tray.on('right-click', () => {
-        tray?.popUpContextMenu(contextMenu)
+        toggleDashboard()
     })
 }
+
+
 
 let mainWindow: BrowserWindow | null = null
 
@@ -321,8 +318,8 @@ function startAutoLoafingDetector() {
 
                     // Show Notification
                     new Notification({
-                        title: '摸鱼结束',
-                        body: `刚刚在 ${lastActiveAppName} 摸鱼了 ${Math.round(duration)} 秒`,
+                        title: t('notification.breakEnded'),
+                        body: t('notification.breakEndedBody', { app: lastActiveAppName, seconds: Math.round(duration) }),
                         silent: true // Don't play sound to be subtle? Or false? Let's keep it silent or default.
                     }).show()
                 }
@@ -453,7 +450,7 @@ function createFakeUpdateWindow() {
             const history = store.get('breakHistory') || []
             history.unshift({
                 id: Date.now(),
-                type: '假更新',
+                type: 'fake-update',
                 startTime: global.fakeUpdateStartTime,
                 duration: closedDuration,
                 date: new Date().toLocaleDateString()
@@ -483,10 +480,10 @@ function createFakeUpdateWindow() {
                     const currencySymbol = store?.get('currency') || '¥'
                     dialog.showMessageBox({
                         type: 'info',
-                        title: '摸鱼完成!',
-                        message: `假更新结束`,
-                        detail: `⏱️ 时长: ${(closedDuration / 60).toFixed(2)} 分钟\n💰 已白嫖: ${currencySymbol}${earned.toFixed(2)}\n🎣 没钓到鱼...`,
-                        buttons: ['太棒了!'],
+                        title: t('notification.breakComplete'),
+                        message: t('notification.fakeUpdateEnded'),
+                        detail: `⏱️ ${t('notification.duration')}: ${(closedDuration / 60).toFixed(2)} ${t('notification.minutes')}\n💰 ${t('notification.earned')}: ${currencySymbol}${earned.toFixed(2)}\n🎣 ${t('notification.noFish')}`,
+                        buttons: [t('notification.awesome')],
                         noLink: true
                     })
                 }, 100)
@@ -542,7 +539,7 @@ function createFakeCodingWindow() {
             const history = store.get('breakHistory') || []
             history.unshift({
                 id: Date.now(),
-                type: '假编程',
+                type: 'fake-coding',
                 startTime: fakeCodingStartTime,
                 duration: closedDuration,
                 date: new Date().toLocaleDateString()
@@ -572,10 +569,10 @@ function createFakeCodingWindow() {
                     const currencySymbol = store?.get('currency') || '¥'
                     dialog.showMessageBox({
                         type: 'info',
-                        title: '摸鱼完成!',
-                        message: `假编程结束`,
-                        detail: `⏱️ 时长: ${(closedDuration / 60).toFixed(2)} 分钟\n💰 已白嫖: ${currencySymbol}${earned.toFixed(2)}\n🎣 没钓到鱼...`,
-                        buttons: ['太棒了!'],
+                        title: t('notification.breakComplete'),
+                        message: t('notification.fakeCodingEnded'),
+                        detail: `⏱️ ${t('notification.duration')}: ${(closedDuration / 60).toFixed(2)} ${t('notification.minutes')}\n💰 ${t('notification.earned')}: ${currencySymbol}${earned.toFixed(2)}\n🎣 ${t('notification.noFish')}`,
+                        buttons: [t('notification.awesome')],
                         noLink: true
                     })
                 }, 100)
@@ -683,7 +680,7 @@ ipcMain.on('end-poop-session', (_event, duration) => {
         const history = store.get('breakHistory') || []
         history.unshift({
             id: Date.now(),
-            type: '带薪拉屎',
+            type: 'poop',
             startTime: Date.now() - duration * 1000,
             duration: duration,
             date: new Date().toLocaleDateString()
@@ -717,10 +714,10 @@ ipcMain.on('end-poop-session', (_event, duration) => {
                 const currencySymbol = store?.get('currency') || '¥'
                 const options = {
                     type: 'info' as const,
-                    title: '摸鱼完成!',
-                    message: `带薪拉屎结束`,
-                    detail: `⏱️ 时长: ${(duration / 60).toFixed(2)} 分钟\n💰 已白嫖: ${currencySymbol}${earned.toFixed(2)}\n🎣 没钓到鱼...`,
-                    buttons: ['爽!'],
+                    title: t('notification.breakComplete'),
+                    message: t('notification.paidPoopEnded'),
+                    detail: `⏱️ ${t('notification.duration')}: ${(duration / 60).toFixed(2)} ${t('notification.minutes')}\n💰 ${t('notification.earned')}: ${currencySymbol}${earned.toFixed(2)}\n🎣 ${t('notification.noFish')}`,
+                    buttons: [t('notification.nice')],
                     noLink: true
                 }
 
@@ -797,10 +794,10 @@ ipcMain.on('close-main-window', () => {
 ipcMain.on('quit-app', async () => {
     const { response } = await dialog.showMessageBox({
         type: 'question',
-        title: '确定要跑路吗?',
-        message: '真的要退出摸鱼助手吗？',
-        detail: '退出后将无法自动统计摸鱼时长和工资哦！',
-        buttons: ['退出', '继续摸鱼'],
+        title: t('dialog.confirmQuitTitle'),
+        message: t('dialog.confirmQuitMessage'),
+        detail: t('dialog.confirmQuitDetail'),
+        buttons: [t('dialog.quit'), t('dialog.keepGoing')],
         defaultId: 1,
         cancelId: 1
     })
@@ -1115,6 +1112,17 @@ const extractIconWithQlmanage = (appName: string, appPath: string, cache: Map<st
 
 ipcMain.handle('set-settings', (_event, key, value) => {
     if (store) store.set(key, value)
+})
+
+// Sync language from renderer to main process
+// Sync language from renderer to main process
+// Sync language from renderer to main process
+ipcMain.handle('set-language', (_event, lang: string) => {
+    setLanguage(lang)
+    // Broadcast language change to all windows (Dashboard, Main, etc.)
+    BrowserWindow.getAllWindows().forEach(win => {
+        win.webContents.send('language-changed', lang)
+    })
 })
 
 
