@@ -75,13 +75,17 @@ const Dashboard: React.FC = () => {
 
 
     const WORK_INTERVAL_MINS = 60
+    const WORK_INTERVAL_SECONDS = WORK_INTERVAL_MINS * 60
     // Calculate elapsed minutes based on actual start time from main process
     const elapsedSeconds = Math.max(0, (now - workStartTime) / 1000)
-    const minutesWorked = Math.floor(elapsedSeconds / 60)
     // Cap at 60 mins for display
-    const displayMinutes = Math.min(minutesWorked, WORK_INTERVAL_MINS)
-    const progress = (displayMinutes / WORK_INTERVAL_MINS) * 100
-    const minutesLeft = Math.max(0, WORK_INTERVAL_MINS - displayMinutes)
+    const displaySeconds = Math.min(elapsedSeconds, WORK_INTERVAL_SECONDS)
+    const progress = (displaySeconds / WORK_INTERVAL_SECONDS) * 100
+    const secondsLeft = Math.max(0, WORK_INTERVAL_SECONDS - displaySeconds)
+
+    const minutesLeftDisplay = Math.floor(secondsLeft / 60)
+    const secondsLeftDisplay = Math.floor(secondsLeft % 60)
+    const displayTime = `${minutesLeftDisplay}:${secondsLeftDisplay.toString().padStart(2, '0')}`
 
     const formatLoafTime = (seconds: number) => {
         const totalSeconds = Math.floor(seconds)
@@ -212,10 +216,18 @@ const Dashboard: React.FC = () => {
                             className="text-cyan-500 transition-all duration-1000 drop-shadow-[0_0_4px_rgba(6,182,212,0.5)]"
                             strokeLinecap="round"
                         />
+                        {/* Animated Tip */}
+                        <g style={{ transform: `rotate(${(progress / 100) * 360}deg)`, transformOrigin: '40px 40px', transition: 'transform 1s linear' }}>
+                            <circle cx="72" cy="40" r="3" fill="#fff" className="drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] animate-pulse" />
+                        </g>
                     </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <div className="text-xl font-bold text-cyan-50 drop-shadow-md">{minutesLeft}m</div>
-                        <div className="text-[9px] text-cyan-400/70 -mt-0.5 font-medium">倒计时</div>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center scale-75">
+                        <div className="flex items-baseline gap-[1px] text-cyan-50 drop-shadow-md font-mono tracking-tighter">
+                            <span className="text-2xl font-bold">{minutesLeftDisplay}</span>
+                            <span className="text-xs text-cyan-400 opacity-80 mb-1">:</span>
+                            <span className="text-lg font-semibold text-cyan-200">{secondsLeftDisplay.toString().padStart(2, '0')}</span>
+                        </div>
+                        <div className="text-[9px] text-cyan-400/60 -mt-1 font-medium tracking-widest scale-90">REMAINING</div>
                     </div>
                 </div>
             </div>

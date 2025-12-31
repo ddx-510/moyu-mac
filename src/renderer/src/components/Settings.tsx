@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Banknote, Eye, EyeOff, ScanEye, Building2, RotateCw, Check, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const DEFAULT_CURRENCIES = [
     { label: 'CNY (¥)', symbol: '¥' },
@@ -124,31 +125,36 @@ const Settings: React.FC = () => {
                 <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-400 filter drop-shadow-sm">
                     设置 Settings
                 </h2>
-                <div className="flex bg-slate-900/50 p-1 rounded-xl backdrop-blur-sm border border-cyan-500/10">
-                    <button
-                        onClick={() => setActiveTab('general')}
-                        className={`px-4 py-1.5 rounded-lg text-sm transition-all ${activeTab === 'general' ? 'bg-cyan-500/10 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.1)] border border-cyan-500/20' : 'text-slate-400 hover:text-cyan-200'}`}
-                    >
-                        基础设置
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('salary')}
-                        className={`px-4 py-1.5 rounded-lg text-sm transition-all ${activeTab === 'salary' ? 'bg-cyan-500/10 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.1)] border border-cyan-500/20' : 'text-slate-400 hover:text-cyan-200'}`}
-                    >
-                        薪资设置
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('whitelist')}
-                        className={`px-4 py-1.5 rounded-lg text-sm transition-all ${activeTab === 'whitelist' ? 'bg-cyan-500/10 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.1)] border border-cyan-500/20' : 'text-slate-400 hover:text-cyan-200'}`}
-                    >
-                        白名单
-                    </button>
+                <div className="grid grid-cols-3 gap-1 bg-slate-900/50 p-1 rounded-xl backdrop-blur-sm border border-cyan-500/10 relative w-80">
+                    {['general', 'salary', 'whitelist'].map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab as any)}
+                            className={`w-full py-1.5 rounded-lg text-sm transition-colors relative z-10 ${activeTab === tab ? 'text-cyan-400' : 'text-slate-400 hover:text-cyan-200'
+                                }`}
+                        >
+                            {activeTab === tab && (
+                                <motion.div
+                                    layoutId="activeTab"
+                                    className="absolute inset-0 bg-cyan-500/10 border border-cyan-500/20 shadow-[0_0_10px_rgba(34,211,238,0.1)] rounded-lg -z-10"
+                                    transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+                                />
+                            )}
+                            {tab === 'general' ? '基础设置' : tab === 'salary' ? '薪资设置' : '白名单'}
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            <div className="flex-1">
+            <div className="flex-1 relative overflow-hidden">
                 {activeTab === 'general' && (
-                    <div className="space-y-6">
+                    <motion.div
+                        key="general"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.2 }}
+                        className="space-y-6"
+                    >
                         {/* Auto Tracking Toggle */}
                         <div className="bg-[#1e293b]/50 backdrop-blur-xl p-6 rounded-2xl border border-cyan-500/10 flex items-center justify-between shadow-lg ring-1 ring-cyan-500/5">
                             <div className="flex items-center gap-4">
@@ -176,11 +182,17 @@ const Settings: React.FC = () => {
                                 Data is stored locally. No boss will know.
                             </p>
                         </div>
-                    </div>
+                    </motion.div>
                 )}
 
                 {activeTab === 'salary' && (
-                    <div className="space-y-6">
+                    <motion.div
+                        key="salary"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.2 }}
+                        className="space-y-6"
+                    >
                         <div className="bg-[#1e293b]/50 backdrop-blur-xl p-8 rounded-3xl border border-cyan-500/10 shadow-xl relative overflow-hidden group ring-1 ring-cyan-500/5">
                             <div className="absolute top-0 right-0 p-32 bg-cyan-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/10 transition-all duration-1000"></div>
 
@@ -245,11 +257,17 @@ const Settings: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 )}
 
                 {activeTab === 'whitelist' && (
-                    <div className="space-y-6">
+                    <motion.div
+                        key="whitelist"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.2 }}
+                        className="space-y-6"
+                    >
                         <h3 className="text-xl font-bold mb-6 flex items-center gap-3 text-cyan-50">
                             <Building2 className="w-8 h-8 text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" /> 应用白名单
                         </h3>
@@ -309,7 +327,7 @@ const Settings: React.FC = () => {
                         <div className="mt-6 pt-4 border-t border-cyan-500/10 flex items-center justify-between text-xs">
                             <span className="text-slate-500">检测中: <span className="text-cyan-400 font-mono">{currentApp}</span></span>
                         </div>
-                    </div>
+                    </motion.div>
                 )}
             </div>
         </div>

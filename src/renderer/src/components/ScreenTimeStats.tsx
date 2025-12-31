@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { Waves, Clock, Calendar, BarChart3, History, MousePointerClick, Monitor } from 'lucide-react'
+import { Waves, Clock, Calendar, BarChart3, History, MousePointerClick, Monitor, Fish, Armchair, Gamepad2, Utensils, Coffee, Cigarette, RefreshCw, Code } from 'lucide-react'
 
 type TimeRange = 'day' | 'week' | 'month' | 'year'
 
@@ -146,6 +146,25 @@ const ScreenTimeStats: React.FC = () => {
         return 'text-5xl drop-shadow-[0_0_10px_rgba(0,200,255,0.5)]'
     }
 
+    const cleanName = (name: string) => {
+        // Use alternation | instead of [] to handle surrogate pairs correctly without u flag issues
+        // Includes: 👀, 💩, 🐟, 🖥️, ⌨️
+        return name.replace(/^(👀|💩|🐟|🖥️|⌨️)\s*/, '').replace(/\s*(👀|💩|🐟|🖥️|⌨️)$/, '')
+    }
+
+    const getIcon = (type: string = '') => {
+        const lowerType = type.toLowerCase()
+        if (type === '带薪拉屎' || type === 'Poop' || lowerType.includes('拉屎') || lowerType.includes('poop')) return <Armchair className="w-5 h-5 text-orange-400" />
+        if (type.includes('Fake Update') || type.includes('假更新')) return <RefreshCw className="w-5 h-5 text-blue-400" />
+        if (type.includes('Fake Coding') || type.includes('假编程')) return <Code className="w-5 h-5 text-emerald-400" />
+        if (lowerType.includes('游戏') || lowerType.includes('game') || lowerType.includes('steam')) return <Gamepad2 className="w-5 h-5 text-purple-400" />
+        if (type === 'Fish' || lowerType.includes('fish') || lowerType.includes('摸鱼')) return <Fish className="w-5 h-5 text-cyan-400" />
+        if (type === 'Smoke' || lowerType.includes('smoke')) return <Cigarette className="w-5 h-5 text-gray-400" />
+        if (type.includes('饭') || type.includes('食')) return <Utensils className="w-5 h-5 text-yellow-400" />
+        if (type === 'Coffee' || type.includes('咖啡') || type.includes('茶') || type.includes('休息')) return <Coffee className="w-5 h-5 text-emerald-400" />
+        return <Monitor className="w-5 h-5 text-cyan-400" />
+    }
+
     return (
         <div className="text-white h-full flex flex-col overflow-hidden">
             {/* ... Header ... */}
@@ -195,10 +214,10 @@ const ScreenTimeStats: React.FC = () => {
                                 <div key={item.id} className="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-lg transition-all">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-cyan-500/20 rounded-lg">
-                                            <Monitor className="w-5 h-5 text-cyan-400" />
+                                            {getIcon(item.type)}
                                         </div>
                                         <div>
-                                            <div className="text-sm font-medium">{item.type || '摸鱼'}</div>
+                                            <div className="text-sm font-medium">{cleanName(item.type || '摸鱼')}</div>
                                             <div className="text-xs text-gray-500">{item.label}</div>
                                         </div>
                                     </div>
@@ -262,7 +281,10 @@ const ScreenTimeStats: React.FC = () => {
                                 <div className="space-y-1.5">
                                     {selectedItem.breakdown.map((item, idx) => (
                                         <div key={idx} className="flex justify-between items-center text-xs px-2 py-1 bg-white/5 rounded">
-                                            <span className="truncate max-w-[120px]" title={item.type}>{item.type}</span>
+                                            <div className="flex items-center gap-2 max-w-[140px]">
+                                                {getIcon(item.type)}
+                                                <span className="truncate" title={cleanName(item.type)}>{cleanName(item.type)}</span>
+                                            </div>
                                             <div className="flex gap-2 text-gray-400">
                                                 <span>{item.count}次</span>
                                                 <span className="font-mono text-cyan-400">{formatTime(item.duration)}</span>

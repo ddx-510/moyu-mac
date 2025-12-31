@@ -354,7 +354,7 @@ function recordAutoLoafingSession(duration: number, appName: string) {
     const history = store.get('breakHistory') || []
     history.unshift({
         id: Date.now(),
-        type: `👀 ${appName}`,
+        type: appName,
         startTime: Date.now() - duration * 1000,
         duration: duration,
         date: new Date().toLocaleDateString()
@@ -452,7 +452,7 @@ function createFakeUpdateWindow() {
             const history = store.get('breakHistory') || []
             history.unshift({
                 id: Date.now(),
-                type: '🖥️ 假更新',
+                type: '假更新',
                 startTime: global.fakeUpdateStartTime,
                 duration: closedDuration,
                 date: new Date().toLocaleDateString()
@@ -541,7 +541,7 @@ function createFakeCodingWindow() {
             const history = store.get('breakHistory') || []
             history.unshift({
                 id: Date.now(),
-                type: '⌨️ 假编程',
+                type: '假编程',
                 startTime: fakeCodingStartTime,
                 duration: closedDuration,
                 date: new Date().toLocaleDateString()
@@ -633,7 +633,7 @@ ipcMain.on('end-poop-session', (_event, duration) => {
         const history = store.get('breakHistory') || []
         history.unshift({
             id: Date.now(),
-            type: '💩 带薪拉屎',
+            type: '带薪拉屎',
             startTime: Date.now() - duration * 1000,
             duration: duration,
             date: new Date().toLocaleDateString()

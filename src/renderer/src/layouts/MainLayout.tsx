@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Fish, Wallet, PieChart, SettingsIcon } from 'lucide-react'
 
 import logo from '../assets/logo.png'
@@ -59,13 +60,20 @@ const MainLayout: React.FC = () => {
                             <Link
                                 key={item.path}
                                 to={item.path}
-                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${isActive
-                                    ? 'bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.1)] border-r-2 border-cyan-400/50'
-                                    : 'text-slate-400 hover:bg-cyan-500/5 hover:text-cyan-100'
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative ${isActive
+                                    ? 'text-cyan-400'
+                                    : 'text-slate-400 hover:text-cyan-100'
                                     }`}
                             >
-                                <Icon className={`w-5 h-5 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
-                                <span className={`font-medium ${isActive ? 'tracking-wide' : ''}`}>{item.label}</span>
+                                {isActive && (
+                                    <motion.div
+                                        layoutId="sidebarActive"
+                                        className="absolute inset-0 bg-cyan-500/10 border-r-2 border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.1)] rounded-xl"
+                                        transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+                                    />
+                                )}
+                                <Icon className={`w-5 h-5 transition-transform duration-300 relative z-10 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
+                                <span className={`font-medium relative z-10 ${isActive ? 'tracking-wide' : ''}`}>{item.label}</span>
                             </Link>
                         )
                     })}
@@ -81,9 +89,15 @@ const MainLayout: React.FC = () => {
             <div className="flex-1 overflow-auto bg-transparent relative">
                 {/* Subtle Water Caustics/Glow Effect (Optional background decoration) */}
                 <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(6,182,212,0.05),transparent_50%)] pointer-events-none" />
-                <div className="p-8 max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <motion.div
+                    key={location.pathname}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                    className="p-8 max-w-5xl mx-auto"
+                >
                     <Outlet />
-                </div>
+                </motion.div>
             </div>
         </div>
     )

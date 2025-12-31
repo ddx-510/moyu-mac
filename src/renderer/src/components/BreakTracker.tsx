@@ -12,7 +12,7 @@ const BreakTracker: React.FC = () => {
     const [isThinking, setIsThinking] = useState(false) // active break
     const [startTime, setStartTime] = useState<number | null>(null)
     const [elapsed, setElapsed] = useState(0)
-    const [breakType, setBreakType] = useState('💩 Poop')
+    const [breakType, setBreakType] = useState('Poop')
     const [history, setHistory] = useState<BreakLog[]>([])
 
     // Load history
@@ -89,9 +89,11 @@ const BreakTracker: React.FC = () => {
                 <div className="bg-white/5 p-8 rounded-2xl border border-white/10 flex flex-col items-center justify-center min-h-[300px]">
                     {isThinking ? (
                         <div className="text-center animate-in fade-in zoom-in duration-300">
-                            <div className="text-6xl mb-4 animate-bounce">{breakType.split(' ')[0]}</div>
+                            <div className="text-6xl mb-4 animate-bounce">
+                                {breakType === 'Poop' ? '💩' : breakType === 'Smoke' ? '🚬' : breakType === 'Coffee' ? '☕' : '🐟'}
+                            </div>
                             <div className="text-xl text-gray-400 mb-2">You are currently:</div>
-                            <div className="text-2xl font-bold mb-6">{breakType.split(' ').slice(1).join(' ')}</div>
+                            <div className="text-2xl font-bold mb-6">{breakType}</div>
                             <div className="text-6xl font-mono font-bold text-orange-400 mb-8">{formatTime(elapsed)}</div>
                             <button
                                 onClick={endBreak}
@@ -104,19 +106,19 @@ const BreakTracker: React.FC = () => {
                         <div className="w-full">
                             <h3 className="text-lg text-gray-400 mb-6 text-center">Start a new break</h3>
                             <div className="grid grid-cols-2 gap-4">
-                                <button onClick={() => startBreak('💩 Poop')} className="p-4 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl transition-all hover:scale-105 active:scale-95 flex flex-col items-center gap-2">
+                                <button onClick={() => startBreak('Poop')} className="p-4 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl transition-all hover:scale-105 active:scale-95 flex flex-col items-center gap-2">
                                     <span className="text-4xl">💩</span>
                                     <span className="font-medium">Poop</span>
                                 </button>
-                                <button onClick={() => startBreak('🚬 Smoke')} className="p-4 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl transition-all hover:scale-105 active:scale-95 flex flex-col items-center gap-2">
+                                <button onClick={() => startBreak('Smoke')} className="p-4 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl transition-all hover:scale-105 active:scale-95 flex flex-col items-center gap-2">
                                     <span className="text-4xl">🚬</span>
                                     <span className="font-medium">Smoke</span>
                                 </button>
-                                <button onClick={() => startBreak('☕ Coffee')} className="p-4 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl transition-all hover:scale-105 active:scale-95 flex flex-col items-center gap-2">
+                                <button onClick={() => startBreak('Coffee')} className="p-4 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl transition-all hover:scale-105 active:scale-95 flex flex-col items-center gap-2">
                                     <span className="text-4xl">☕</span>
                                     <span className="font-medium">Coffee</span>
                                 </button>
-                                <button onClick={() => startBreak('🐟 Fish')} className="p-4 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl transition-all hover:scale-105 active:scale-95 flex flex-col items-center gap-2">
+                                <button onClick={() => startBreak('Fish')} className="p-4 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl transition-all hover:scale-105 active:scale-95 flex flex-col items-center gap-2">
                                     <span className="text-4xl">🐟</span>
                                     <span className="font-medium">Touch Fish</span>
                                 </button>
@@ -138,9 +140,8 @@ const BreakTracker: React.FC = () => {
                             history.map(log => (
                                 <div key={log.id} className="flex items-center justify-between p-3 bg-black/20 rounded-lg text-sm border border-white/5">
                                     <div className="flex items-center gap-3">
-                                        <span className="text-2xl">{log.type.split(' ')[0]}</span>
-                                        <div>
-                                            <div className="font-medium text-gray-200">{log.type.split(' ').slice(1).join(' ')}</div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="font-medium text-gray-200">{log.type}</div>
                                             <div className="text-xs text-gray-500">{new Date(log.startTime).toLocaleTimeString()} · {log.date}</div>
                                         </div>
                                     </div>
