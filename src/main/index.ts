@@ -200,7 +200,7 @@ function tryFishing(durationSeconds: number): Fish | null {
     }
 }
 
-let promptWindow: BrowserWindow | null = null
+
 let workTimer: NodeJS.Timeout | null = null
 let workTimeElapsed = 0
 const WORK_INTERVAL = 60 * 60 * 1000 // 1 Hour
@@ -217,42 +217,7 @@ function updateTrayIcon(percentage: number) {
     tray.setTitle(displayText)
 }
 
-function createPromptWindow() {
-    if (promptWindow) {
-        promptWindow.show()
-        promptWindow.focus()
-        return
-    }
 
-    promptWindow = new BrowserWindow({
-        width: 400,
-        height: 450,
-        show: false,
-        frame: false,
-        alwaysOnTop: true,
-        resizable: false,
-        webPreferences: {
-            preload: join(__dirname, '../preload/index.js'),
-            sandbox: false
-        }
-    })
-
-    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-        promptWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}#/prompt`)
-    } else {
-        promptWindow.loadFile(join(__dirname, '../renderer/index.html'), { hash: 'prompt' })
-    }
-
-    promptWindow.on('ready-to-show', () => {
-        promptWindow?.show()
-    })
-
-    promptWindow.on('closed', () => {
-        promptWindow = null
-        // Reset timer if prompt is just closed without selection
-        startWorkTimer()
-    })
-}
 
 // Auto-Loafing System
 let isAutoLoafing = false
@@ -830,7 +795,7 @@ ipcMain.on('open-settings', () => {
 
 ipcMain.on('start-loafing', (_event, type) => {
     // Renderer requested to start a specific loaf activity from Prompt
-    if (promptWindow) promptWindow.close()
+
     if (tideWarningWindow) tideWarningWindow.close()
 
     // Logic for different types
@@ -870,9 +835,7 @@ ipcMain.on('stop-loafing', () => {
     startWorkTimer()
 })
 
-ipcMain.on('dismiss-prompt', () => {
-    promptWindow?.close()
-})
+
 
 let store: any
 

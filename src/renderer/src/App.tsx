@@ -7,7 +7,7 @@ import FakeCoding from './components/FakeCoding'
 import FishingGame from './components/FishingGame'
 import MoneyCounter from './components/MoneyCounter'
 import Settings from './components/Settings'
-import Prompt from './components/Prompt'
+
 import MainLayout from './layouts/MainLayout'
 import FishPond from './components/ForestPage'
 import ScreenTimeStats from './components/ScreenTimeStats'
@@ -21,7 +21,7 @@ function App(): React.JSX.Element {
                 <Route path="/fake-update" element={<FakeUpdate />} />
                 <Route path="/fake-coding" element={<FakeCoding />} />
                 <Route path="/fishing" element={<FishingGame />} />
-                <Route path="/prompt" element={<Prompt />} />
+
                 <Route path="/tide-warning" element={<TideWarning />} />
 
                 {/* Main Window Routes */}
