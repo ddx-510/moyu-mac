@@ -378,7 +378,7 @@ function startWorkTimer() {
         updateTrayIcon(percentage)
 
         if (workTimeElapsed >= WORK_INTERVAL) {
-            createPromptWindow()
+            createTideWarningWindow()
             stopWorkTimer()
         }
     }, UPDATE_INTERVAL)
