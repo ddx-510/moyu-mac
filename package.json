@@ -15,10 +15,7 @@
     "productName": "Moyu",
     "mac": {
       "category": "public.app-category.productivity",
-      "icon": "resources/icon.png",
-      "extendInfo": {
-        "LSUIElement": true
-      }
+      "icon": "resources/icon.png"
     },
     "directories": {
       "output": "dist"
