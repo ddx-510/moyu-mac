@@ -421,7 +421,7 @@ const Settings: React.FC = () => {
 
 
                         <div className="mt-6 pt-4 border-t border-cyan-500/10 flex items-center justify-between text-xs">
-                            <span className="text-slate-500">检测中: <span className="text-cyan-400 font-mono">{currentApp}</span></span>
+                            <span className="text-slate-500">{t('settings.detecting')}: <span className="text-cyan-400 font-mono">{currentApp}</span></span>
                         </div>
                     </motion.div>
                 )}

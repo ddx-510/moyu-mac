@@ -48,7 +48,8 @@
     "whitelistTitle": "应用白名单",
     "activeWhitelist": "已生效白名单 / 手动输入",
     "noWhitelist": "暂无白名单应用 (所有应用都会被计为摸鱼)",
-    "emptyList": "列表为空，请刷新"
+    "emptyList": "列表为空，请刷新",
+    "detecting": "检测中"
   },
   "money": {
     "notConfigured": "还没告诉我你赚多少呢～",

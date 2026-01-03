@@ -48,7 +48,8 @@
     "whitelistTitle": "App Whitelist",
     "activeWhitelist": "Active Whitelist / Manual Input",
     "noWhitelist": "No whitelist apps (All apps count as loafing)",
-    "emptyList": "List empty, please refresh"
+    "emptyList": "List empty, please refresh",
+    "detecting": "Detecting"
   },
   "money": {
     "notConfigured": "Salary Not Set",

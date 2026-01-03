@@ -1098,7 +1098,10 @@ app.whenReady().then(async () => {
     // We just need store ready for IPC calls which come from renderer later.
 
     if (process.platform === 'darwin') {
+        // Force app to show in Dock (user requested)
+        app.setActivationPolicy('regular')
         app.dock?.setIcon(nativeImage.createFromPath(icon))
+        app.dock?.show()
     }
 
     createDashboardWindow()
